@@ -434,6 +434,92 @@
 (function(){
   "use strict";
 
+  /* =================== ACCESS (демо-доступ / оплата) ===================
+   * Бот открывает эту страницу с ?access=full или ?access=demo&started=<мс>.
+   * "started" — канонический момент начала демо, который хранит САМ БОТ
+   * (storage.demo_started_at) — здесь мы его только зеркалим в localStorage,
+   * а не заводим свои часы, чтобы не было двух расходящихся отсчётов.
+   * Если открыть страницу без бота (напрямую по ссылке) — ACCESS.mode будет
+   * 'none', то есть ничего не откроется: доступ выдаёт только бот. */
+  var ACCESS_LS_KEY = 'ryzhik_access_v1';
+  var DEMO_HOURS = 24;
+
+  function readAccessLS(){
+    try{
+      var raw = localStorage.getItem(ACCESS_LS_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return {mode:'none'};
+  }
+  function writeAccessLS(obj){
+    try{ localStorage.setItem(ACCESS_LS_KEY, JSON.stringify(obj)); }catch(e){}
+  }
+  (function initAccessFromLaunchParams(){
+    var params;
+    try{ params = new URLSearchParams(location.search); }catch(e){ return; }
+    var access = params.get('access');
+    if(access === 'full'){
+      writeAccessLS({mode:'full'});
+    } else if(access === 'demo'){
+      var started = parseInt(params.get('started'), 10);
+      if(!started || isNaN(started)) started = Date.now();
+      writeAccessLS({mode:'demo', startedAt: started});
+    }
+    // Нет параметров (например, перезаход тем же URL) — ничего не трогаем,
+    // используем то, что уже сохранено с прошлого запуска.
+  })();
+
+  function isDemoExpired(a){
+    return !a.startedAt || (Date.now() - a.startedAt) > DEMO_HOURS * 3600 * 1000;
+  }
+  function hasFullAccess(){ return readAccessLS().mode === 'full'; }
+  // Есть ли хоть какой-то доступ прямо сейчас (полный ИЛИ активное демо).
+  function hasAnyAccess(){
+    var a = readAccessLS();
+    if(a.mode === 'full') return true;
+    if(a.mode === 'demo') return !isDemoExpired(a);
+    return false;
+  }
+  // Уровень 1 разрешён и в демо, и при полном доступе; остальные 24 — только
+  // при полном доступе. Раздел "Цифры 11-100" (canAccessNumbersExt) и
+  // "Повторение" (canAccessReview) по той же логике не входят в демо-объём,
+  // который явно оговорён (алфавит, цифры 1-10, уровень 1).
+  function canAccessLevel(lv){
+    if(hasFullAccess()) return true;
+    if(lv === 1) return hasAnyAccess();
+    return false;
+  }
+  function canAccessNumbersExt(){ return hasFullAccess(); }
+  function canAccessReview(){ return hasFullAccess(); }
+
+  function renderPaywallScreen(reason){
+    state.screen = 'paywall';
+    var title = reason === 'expired'
+      ? 'Бесплатный демо-урок закончился'
+      : 'Нужна оплата';
+    var body = reason === 'expired'
+      ? 'Демо-доступ на 24 часа истёк. Чтобы открыть все 25 уровней Академии, вернись в чат с ботом и нажми «Оплатить».'
+      : 'Это часть Академии открывается после оплаты. Вернись в чат с ботом и нажми «Оплатить», чтобы открыть все 25 уровней.';
+    $('#app').innerHTML =
+      '<div class="stage" style="align-items:center; justify-content:center; text-align:center; gap:16px;">'+
+        '<div class="mascot" style="width:110px;height:110px;">'+foxSvg()+'</div>'+
+        '<h1 class="home-title" style="margin:0;">'+title+'</h1>'+
+        '<p class="home-sub" style="margin:0; max-width:340px;">'+body+'</p>'+
+        '<button class="big-btn solid-leaf" data-action="paywall-open-bot">Вернуться в бота</button>'+
+        '<button class="big-btn ghost" data-action="go-home">На главный экран</button>'+
+      '</div>';
+  }
+  function openBotFromPaywall(){
+    var tg = window.Telegram && window.Telegram.WebApp;
+    try{
+      if(tg && tg.close){ tg.close(); return; }
+    }catch(e){}
+    // Вне Telegram (локальная проверка) — close() недоступен, просто ничего
+    // не делаем, кнопка тут не актуальна.
+  }
+
+  /* =================== /ACCESS =================== */
+
   // v79e: платформенная возможность "downloads" - настоящий диалог
   // сохранения файла у зрителя, если артефакт открыт внутри claude.ai.
   // Остаётся null (без ошибок), если страница открыта где-то ещё -
@@ -3146,6 +3232,7 @@ var ICONS = {
 
   function renderHome(){
     state.screen = 'home';
+    if(!hasAnyAccess()){ renderPaywallScreen('expired'); return; }
     if(!state.childName){ renderNameOnboarding(); return; }
     var level = Math.min(state.curDay, LEVEL_COUNT);
     var allDone = state.curDay > LEVEL_COUNT;
@@ -3157,9 +3244,13 @@ var ICONS = {
     // визуальная подсказка, но не блокирует переход.
     for(var lv=1; lv<=LEVEL_COUNT; lv++){
       var lcls = lv < state.curDay ? 'level-done' : (lv === state.curDay ? 'level-current' : 'level-locked');
+      // Демо-доступ открывает только уровень 1 — на остальных небольшой
+      // замочек рядом с названием, само нажатие всё равно уводит на
+      // startDay(), который и покажет платный экран при попытке начать.
+      var payLock = (!hasFullAccess() && lv > 1) ? ' 🔒' : '';
       levelCards += '<button class="level-card '+lcls+'" data-action="start-day" data-day="'+lv+'">'+
         '<span class="level-badge">'+(lv<state.curDay||allDone ? '✓' : mediaTag(LEVEL_BADGE_ICON[lv-1],'level-badge-img'))+'</span>'+
-        '<span class="level-name">'+LEVEL_NAMES[lv-1]+'</span>'+
+        '<span class="level-name">'+LEVEL_NAMES[lv-1]+payLock+'</span>'+
       '</button>';
     }
     // v22: по прямой просьбе пользователя — значок неактивен (не кликабелен)
@@ -3274,6 +3365,7 @@ var ICONS = {
     return items.slice(0, 10);
   }
   function startReviewSession(){
+    if(!canAccessReview()){ renderPaywallScreen('locked'); return; }
     var pool = buildReviewPool();
     if(pool.length === 0){
       showToast('Пока нечего повторять — сначала пройдите хотя бы один урок!');
@@ -3498,6 +3590,7 @@ var ICONS = {
   // advanceAfterCorrect), otherwise starts it fresh — either way this is
   // the ONLY place that (re)initialises a level's in-progress state.
   function startDay(day){
+    if(!canAccessLevel(day)){ renderPaywallScreen(hasAnyAccess() ? 'locked' : 'expired'); return; }
     state.playDay = day;
     state.newlyUnlocked = [];
     var lp = state.levelProgress[day];
@@ -5232,6 +5325,7 @@ var ICONS = {
   var NUM_PIC_FALLBACK = ['🥯','🌙','🦶','🍴','🐾','✋','🐞','🌈','🐙','9️⃣','🙌'];
   function numPicIcon(n){ return ICONS['num_pic_'+n] || NUM_PIC_FALLBACK[n]; }
   function renderNumbersScreen(){
+    if(!hasAnyAccess()){ renderPaywallScreen('expired'); return; }
     state.screen = 'numbers';
     function cell(n){
       return '<button class="alpha-cell" data-action="show-number" data-n="'+n+'">'+
@@ -5270,6 +5364,7 @@ var ICONS = {
   // пользователя (v61) больше НЕТ картинок и разделения на секции - весь
   // диапазон 11-100 выведен единым списком, только цифра + звук по клику.
   function renderNumbersExtScreen(){
+    if(!canAccessNumbersExt()){ renderPaywallScreen(hasAnyAccess() ? 'locked' : 'expired'); return; }
     state.screen = 'numbers-ext';
     // v61: по прямой просьбе пользователя - убрано разделение на секции
     // (11-20 / круглые десятки / остальные) и убраны все картинки; единый
@@ -5288,6 +5383,7 @@ var ICONS = {
       '</div>';
   }
   function renderAlphabetScreen(){
+    if(!hasAnyAccess()){ renderPaywallScreen('expired'); return; }
     state.screen = 'alphabet';
     logAlphabetEvent('view');
     var idx = buildAlphabetIndex();
@@ -5498,6 +5594,7 @@ var ICONS = {
       case 'start-day': startDay(parseInt(el.dataset.day,10)); break;
       case 'start-topic': startTopicBatch(el.dataset.topic); break;
       case 'go-home': renderHome(); break;
+      case 'paywall-open-bot': openBotFromPaywall(); break;
       case 'go-prev-round': goToPreviousRound(); break;
       case 'save-name':
         (function(){
