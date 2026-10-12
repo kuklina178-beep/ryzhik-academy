@@ -7,195 +7,248 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap">
 <style>
+/* Стиль — как у Академии Рыжика: светлый градиент с цветными пятнами и
+   точечной сеткой, белые «парящие» карточки, яркие градиентные кнопки. */
 :root {
-  --bg: #FEF7E8; --cream: #FEF7E8; --surface: #FFFFFF; --surface-2: #F6F9F1; --ink: #1D2742; --ink-soft: #5B6680; --line: #DCE5D2;
-  --tangerine: #FF7A3D; --tangerine-deep: #E0601F; --jade: #22B89A; --jade-soft: #D6F5EC;
-  --sun: #FFCB2E; --sun-soft: #FFF3C7; --berry: #FF5C8A; --berry-soft: #FFE1EA; --sky: #4DA8FF; --sky-soft: #DDEEFF;
-  --night: #1D2742;
-  --shadow: 0 1px 0 rgba(29,39,66,.04), 0 10px 26px -12px rgba(29,39,66,.25);
-  --display: "Unbounded", "Nunito", system-ui, sans-serif;
+  --bg-a: #EAF1FF; --bg-b: #FFF2E8; --card: #FFFFFF; --ink: #2E2A4A; --ink-soft: #6F6B8C;
+  --coral: #FF7A66; --coral-deep: #E85B47; --sun: #FFB648; --sun-deep: #E89A1E;
+  --leaf: #34C2A3; --leaf-deep: #22A387; --sky: #5AA9F0; --sky-deep: #3D8AD1;
+  --violet: #8E6CFF; --violet-deep: #6A4BE8; --pink: #FF6FA8; --pink-deep: #E04C8A;
+  --ok-soft: #DDF7EF; --bad-soft: #FFE3EC; --tile: #FEF7E8;
+  --shadow-rgb: 46, 42, 90;
+  --sh-s: 0 10px 22px -12px rgba(var(--shadow-rgb), .35), 0 1px 4px rgba(var(--shadow-rgb), .08);
+  --sh-m: 0 18px 36px -18px rgba(var(--shadow-rgb), .45), 0 2px 8px rgba(var(--shadow-rgb), .07);
+  --display: "Baloo 2", "Nunito", system-ui, sans-serif;
   --body: "Nunito", "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 html, body { height: 100%; margin: 0; }
-body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.4; overscroll-behavior: none; user-select: none; -webkit-user-select: none; }
+body {
+  color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.4;
+  overscroll-behavior: none; user-select: none; -webkit-user-select: none;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255,182,72,.22), transparent 52%),
+    radial-gradient(circle at 88% 12%, rgba(90,169,240,.24), transparent 52%),
+    radial-gradient(circle at 50% 105%, rgba(232,93,158,.16), transparent 58%),
+    linear-gradient(180deg, var(--bg-a), var(--bg-b));
+  background-attachment: fixed;
+}
+body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: radial-gradient(rgba(var(--shadow-rgb), .07) 1.2px, transparent 1.3px); background-size: 22px 22px; }
 button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; padding: 0; }
-button:focus-visible, input:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
-h1, h2, h3 { font-family: var(--display); margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--sky-deep); outline-offset: 3px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; margin: 0; line-height: 1.1; text-wrap: balance; }
 p { margin: 0; }
 img { display: block; max-width: 100%; }
 .num { font-variant-numeric: tabular-nums; }
+.tile-img { border-radius: 18%; background: var(--tile); }
 
-#app { height: 100%; display: flex; flex-direction: column; max-width: 560px; margin: 0 auto; position: relative; }
-.screen { flex: 1; overflow-y: auto; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+#app { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; max-width: 560px; margin: 0 auto; }
+.screen { flex: 1; overflow-y: auto; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 22px; display: flex; flex-direction: column; gap: 16px; }
 
 /* верхняя строка */
 .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.chip { display: inline-flex; align-items: center; gap: 5px; background: var(--cream); border: 1.5px solid var(--line); border-radius: 999px; padding: 4px 11px 4px 6px; font-weight: 900; font-size: 15px; white-space: nowrap; }
-.chip img { width: 24px; height: 24px; }
-.icon-btn { width: 42px; height: 42px; border-radius: 14px; background: var(--cream); border: 1.5px solid var(--line); display: grid; place-items: center; flex: none; }
-.icon-btn img { width: 28px; height: 28px; }
-.tpill { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 999px; padding: 4px 11px; font-weight: 900; font-size: 15px; font-variant-numeric: tabular-nums; }
+.pill { display: inline-flex; align-items: center; gap: 6px; background: var(--card); border-radius: 999px; padding: 6px 14px 6px 8px; font-family: var(--display); font-weight: 800; font-size: 18px; box-shadow: var(--sh-s); white-space: nowrap; }
+.pill img { width: 26px; height: 26px; border-radius: 50%; }
+.icon-btn { width: 46px; height: 46px; border-radius: 999px; background: var(--card); display: grid; place-items: center; box-shadow: var(--sh-s); flex: none; transition: transform .15s; }
+.icon-btn img { width: 30px; height: 30px; border-radius: 50%; }
+.icon-btn:active { transform: scale(.92); }
+.tpill { display: inline-flex; align-items: center; gap: 7px; background: var(--card); border-radius: 999px; padding: 7px 14px 7px 12px; font-family: var(--display); font-weight: 800; font-size: 17px; box-shadow: var(--sh-s); font-variant-numeric: tabular-nums; }
 .tpill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--sky); }
-.tpill.warn { color: var(--berry); border-color: var(--berry); animation: blink 1s step-start infinite; }
-.tpill.warn::before { background: var(--berry); }
+.tpill.warn { color: var(--coral-deep); animation: blink 1s step-start infinite; }
+.tpill.warn::before { background: var(--coral); }
 @keyframes blink { 50% { opacity: .4; } }
 
+/* совёнок и реплика */
+.talk { display: flex; align-items: flex-end; gap: 10px; }
+.talk .owl { width: 84px; height: 84px; flex: none; border-radius: 50%; box-shadow: var(--sh-s); }
+.bubble { background: var(--card); border-radius: 22px 22px 22px 6px; padding: 13px 16px; font-weight: 800; font-size: 16px; box-shadow: var(--sh-s); flex: 1; }
+
 /* главная */
-.hello { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.hello b { font-family: var(--display); font-size: 18px; display: block; line-height: 1.15; }
-.hello span { font-size: 13px; color: var(--ink-soft); font-weight: 700; }
-.hero { position: relative; background: var(--cream); color: var(--ink); border: 2px solid var(--line); border-radius: 28px; padding: 18px 16px; min-height: 200px; overflow: hidden; }
-.hero::before { content: none; }
-.hero::after { content: none; }
-.hero .owl { position: absolute; right: 4px; bottom: 0; width: 165px; height: 165px; object-fit: contain; }
-.hero .eyebrow { position: relative; color: var(--ink-soft); font-weight: 900; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
-.bubble { position: relative; background: #fff; border: 2px solid var(--line); color: var(--ink); border-radius: 18px 18px 18px 6px; padding: 10px 12px; font-weight: 800; font-size: 15px; line-height: 1.3; max-width: 58%; margin-top: 54px; }
-.btn-main { width: 100%; background: var(--tangerine); color: #fff; border-radius: 22px; padding: 16px; font-family: var(--display); font-weight: 800; font-size: 22px; box-shadow: 0 5px 0 var(--tangerine-deep); transition: transform .1s, box-shadow .1s; display: grid; gap: 2px; }
-.btn-main small { font-family: var(--body); font-weight: 800; font-size: 14px; opacity: .92; }
-.btn-main:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--tangerine-deep); }
-.btn-main:disabled { background: #C9CFD9; box-shadow: 0 5px 0 #AEB5C2; }
-.btn-ghost { width: 100%; background: var(--surface); border: 2px solid var(--line); border-radius: 20px; padding: 14px; font-weight: 900; font-size: 17px; }
-.row-info { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 800; color: var(--ink-soft); }
+.title h1 { font-size: 30px; }
+.title p { color: var(--ink-soft); font-weight: 700; margin-top: 2px; }
+.btn { width: 100%; border-radius: 26px; padding: 17px 16px; color: #fff; font-family: var(--display); font-weight: 800; font-size: 24px; display: grid; gap: 0; line-height: 1.1; transition: transform .12s, box-shadow .12s; }
+.btn small { font-family: var(--body); font-weight: 800; font-size: 14px; opacity: .92; }
+.btn:active { transform: translateY(3px) scale(.99); }
+.btn:disabled { filter: grayscale(1); opacity: .55; }
+.b-violet { background: linear-gradient(155deg, var(--violet), var(--violet-deep)); box-shadow: 0 18px 34px -16px rgba(106,75,232,.7), 0 2px 8px rgba(106,75,232,.2); }
+.b-coral { background: linear-gradient(155deg, var(--coral), var(--coral-deep)); box-shadow: 0 18px 34px -16px rgba(232,91,71,.65); }
+.b-leaf { background: linear-gradient(155deg, var(--leaf), var(--leaf-deep)); box-shadow: 0 18px 34px -16px rgba(34,163,135,.6); }
+.b-sun { background: linear-gradient(155deg, var(--sun), var(--sun-deep)); box-shadow: 0 18px 34px -16px rgba(219,150,12,.6); }
+.b-sky { background: linear-gradient(155deg, var(--sky), var(--sky-deep)); box-shadow: 0 18px 34px -16px rgba(61,138,209,.6); }
+.btn-white { width: 100%; background: var(--card); border-radius: 22px; padding: 15px; font-family: var(--display); font-weight: 800; font-size: 19px; box-shadow: var(--sh-s); }
+.hero-card { position: relative; width: 100%; border-radius: 30px; padding: 22px 20px; color: #fff; overflow: hidden; min-height: 170px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; gap: 4px; }
+.hero-card .owl { position: absolute; right: -6px; bottom: -6px; width: 150px; height: 150px; border-radius: 50%; box-shadow: 0 0 0 6px rgba(255,255,255,.35); }
+.hero-card h2 { font-size: 34px; max-width: 58%; }
+.hero-card p { font-weight: 800; opacity: .95; max-width: 52%; line-height: 1.25; }
+.row-info { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 800; color: var(--ink-soft); padding: 0 4px; }
 .dots { display: flex; gap: 6px; }
-.dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--tangerine); }
-.dots i.off { background: var(--line); }
-.card { background: var(--cream); border: 1.5px solid var(--line); border-radius: 22px; padding: 14px; box-shadow: var(--shadow); }
-.next { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center; }
-.next img { width: 64px; height: 64px; border-radius: 14px; }
-.next b { font-weight: 900; }
-.bar { height: 12px; background: var(--surface-2); border-radius: 99px; overflow: hidden; border: 1.5px solid var(--line); margin-top: 6px; }
-.bar > i { display: block; height: 100%; background: var(--sun); border-radius: 99px; }
-.next small { display: block; color: var(--ink-soft); font-weight: 700; margin-top: 4px; }
+.dots i { width: 13px; height: 13px; border-radius: 50%; background: var(--violet); }
+.dots i.off { background: rgba(var(--shadow-rgb), .13); }
+.card { background: var(--card); border-radius: 26px; padding: 16px; box-shadow: var(--sh-m); }
+.next { display: grid; grid-template-columns: 70px 1fr; gap: 14px; align-items: center; }
+.next img { width: 70px; height: 70px; }
+.next b { font-family: var(--display); font-size: 19px; }
+.bar { height: 12px; background: rgba(var(--shadow-rgb), .08); border-radius: 99px; overflow: hidden; margin-top: 7px; }
+.bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--sun), var(--coral)); border-radius: 99px; }
+.next small { display: block; color: var(--ink-soft); font-weight: 800; margin-top: 5px; }
 
 /* таббар */
-.tabbar { display: grid; grid-template-columns: repeat(3, 1fr); padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--cream); border-top: 1.5px solid var(--line); }
-.tab { display: grid; justify-items: center; gap: 2px; font-size: 12px; font-weight: 900; color: var(--ink-soft); }
-.tab span.ic { width: 52px; height: 32px; border-radius: 14px; display: grid; place-items: center; }
-.tab img { width: 28px; height: 28px; }
-.tab.on { color: var(--ink); }
-.tab.on span.ic { background: var(--sun-soft); } .tab.on img { mix-blend-mode: multiply; }
+.tabbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0 12px calc(10px + env(safe-area-inset-bottom, 0px)); padding: 8px; background: rgba(255,255,255,.92); border-radius: 26px; box-shadow: var(--sh-m); backdrop-filter: blur(8px); }
+.tab { display: grid; justify-items: center; gap: 2px; font-size: 13px; font-weight: 900; color: var(--ink-soft); padding: 6px 0; border-radius: 18px; }
+.tab img { width: 32px; height: 32px; border-radius: 10px; }
+.tab.on { color: #fff; background: linear-gradient(155deg, var(--violet), var(--violet-deep)); box-shadow: 0 10px 20px -12px rgba(106,75,232,.8); }
 
 /* карта */
-.map { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; }
-.isle { display: grid; grid-template-columns: 112px 1fr; align-items: center; gap: 12px; width: 82%; }
-.isle:nth-child(even) { align-self: flex-end; grid-template-columns: 1fr 112px; text-align: right; }
-.isle:nth-child(even) .isle-pic { order: 2; }
-.isle-pic { width: 112px; height: 112px; position: relative; }
-.isle-pic img.i { width: 100%; height: 100%; }
-.isle-pic img.owl { position: absolute; width: 62px; height: 62px; right: -14px; top: -14px; }
-.isle b { font-family: var(--display); font-size: 15px; display: block; }
-.isle small { font-weight: 800; color: var(--ink-soft); }
-.isle.closed .isle-pic img.i { filter: grayscale(1); opacity: .45; }
-.isle.now .isle-pic::before { content: ""; position: absolute; inset: -6px; border-radius: 50%; background: radial-gradient(circle, var(--sun-soft) 0 62%, transparent 63%); z-index: -1; }
-.isle .tick { color: var(--jade); }
+.map { display: flex; flex-direction: column; gap: 12px; padding-bottom: 8px; }
+.isle { display: grid; grid-template-columns: 104px 1fr; align-items: center; gap: 14px; background: var(--card); border-radius: 26px; padding: 10px 16px 10px 10px; box-shadow: var(--sh-s); }
+.isle img.i { width: 104px; height: 104px; }
+.isle b { font-family: var(--display); font-size: 20px; display: block; line-height: 1.1; }
+.isle small { font-weight: 800; color: var(--ink-soft); font-size: 14px; }
+.isle.closed { opacity: .6; }
+.isle.closed img.i { filter: grayscale(1); }
+.isle.now { box-shadow: 0 0 0 3px var(--violet), var(--sh-m); }
+.isle .tag { display: inline-block; margin-top: 4px; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 900; color: #fff; background: var(--leaf); }
+.isle.now .tag { background: var(--violet); }
 
 /* игра */
 .game-top { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; }
-.pebbles { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; }
-.pebbles i { height: 10px; border-radius: 99px; background: var(--line); }
-.pebbles i.ok { background: var(--jade); }
+.pebbles { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 5px; }
+.pebbles i { height: 11px; border-radius: 99px; background: rgba(var(--shadow-rgb), .12); }
+.pebbles i.ok { background: var(--leaf); }
 .pebbles i.half { background: var(--sun); }
-.pebbles i.bad { background: var(--berry); }
-.pebbles i.now { background: var(--tangerine); }
-.q { background: var(--surface); border-radius: 26px; padding: 14px; box-shadow: var(--shadow); display: grid; gap: 12px; }
-.qmeta { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 800; color: var(--ink-soft); gap: 8px; }
-.qmeta .topic { display: inline-flex; align-items: center; gap: 6px; }
-.qmeta .topic img { width: 22px; height: 22px; }
-.pic { background: var(--cream); border-radius: 20px; min-height: 150px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; flex-wrap: wrap; }
-.pic .main { width: 170px; height: 170px; }
-.pic .seq { width: 54px; height: 54px; }
-.pic .grp { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; background: var(--cream); border: 2px solid var(--line); border-radius: 16px; padding: 8px; max-width: 46%; }
+.pebbles i.bad { background: var(--pink); }
+.pebbles i.now { background: var(--violet); }
+.q { background: var(--card); border-radius: 30px; padding: 16px; box-shadow: var(--sh-m); display: grid; gap: 12px; }
+.badge { justify-self: center; display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 999px; color: #fff; font-weight: 900; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; background: linear-gradient(155deg, var(--violet), var(--violet-deep)); }
+.badge img { width: 20px; height: 20px; border-radius: 6px; }
+.pic { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.pic .main { width: 168px; height: 168px; }
+.pic .seq { width: 56px; height: 56px; }
+.pic .grp { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; background: var(--tile); border-radius: 20px; padding: 10px; max-width: 46%; }
 .pic .grp img { width: 46px; height: 46px; }
-.pic .plus { font-family: var(--display); font-size: 30px; color: var(--tangerine); }
-.pic .remember { width: 100%; text-align: center; font-family: var(--display); font-size: 18px; }
+.pic .plus { font-family: var(--display); font-size: 34px; color: var(--violet); }
+.pic .remember { width: 100%; text-align: center; font-family: var(--display); font-size: 22px; font-weight: 800; }
 .pic .emojirow { font-size: 40px; letter-spacing: 6px; }
-.qtext { font-family: var(--display); font-weight: 700; font-size: 20px; line-height: 1.25; }
-.speak { display: inline-flex; align-items: center; gap: 8px; background: var(--sky-soft); border-radius: 99px; padding: 6px 14px 6px 6px; font-weight: 900; font-size: 14px; justify-self: start; }
-.speak i { width: 32px; height: 32px; border-radius: 50%; background: var(--sky); color: #fff; display: grid; place-items: center; font-style: normal; }
+.qtext { font-family: var(--display); font-weight: 800; font-size: 22px; line-height: 1.15; text-align: center; }
+.speak { justify-self: center; display: inline-flex; align-items: center; gap: 8px; background: var(--card); border-radius: 99px; padding: 6px 16px 6px 6px; font-weight: 900; font-size: 15px; box-shadow: var(--sh-s); }
+.speak i { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; } .speak i img { width: 34px; height: 34px; }
 .speak.on i { animation: pulse 1s ease-in-out 2; }
-@keyframes pulse { 50% { box-shadow: 0 0 0 9px rgba(77,168,255,.25); } }
-.answers { display: grid; gap: 10px; }
-.answers.grid2 { grid-template-columns: 1fr 1fr; }
-.ans { display: grid; grid-template-columns: 76px 1fr; align-items: center; gap: 12px; text-align: left; background: var(--cream); border: 2px solid var(--line); border-radius: 20px; padding: 8px 12px 8px 8px; font-weight: 900; font-size: 18px; box-shadow: 0 4px 0 var(--line); transition: transform .1s, box-shadow .1s, background .2s, border-color .2s, opacity .2s; min-height: 64px; }
-.ans.noimg { grid-template-columns: 1fr; text-align: center; padding: 14px; }
-.ans.emoji { font-size: 34px; }
-.ans img { width: 76px; height: 76px; border-radius: 14px; }
-.ans:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
-.ans.right img, .ans.wrong img { mix-blend-mode: multiply; } .ans.right { background: var(--jade-soft); border-color: var(--jade); box-shadow: 0 4px 0 var(--jade); }
-.ans.wrong { background: var(--berry-soft); border-color: var(--berry); box-shadow: none; opacity: .5; animation: shake .35s; }
-.ans.reveal { border-color: var(--jade); border-style: dashed; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 9px rgba(90,169,240,.25); } }
+
+/* ответы: белые кнопки с картинкой */
+.answers { display: grid; gap: 12px; }
+.answers.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.answers.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .answers.cols-3 .ans { font-size: 14px; padding: 8px; border-radius: 22px; } .ans span { min-width: 0; max-width: 100%; hyphens: auto; -webkit-hyphens: auto; overflow-wrap: break-word; }
+.ans { position: relative; background: var(--card); border-radius: 24px; box-shadow: var(--sh-m); padding: 10px; display: grid; justify-items: center; align-items: center; gap: 6px; font-weight: 900; font-size: 17px; line-height: 1.15; text-align: center; transition: transform .12s, box-shadow .2s, opacity .2s; }
+.ans img { width: 100%; max-width: 130px; aspect-ratio: 1; }
+.ans.row { grid-template-columns: 78px 1fr; justify-items: start; text-align: left; padding: 8px 14px 8px 8px; }
+.ans.row img { width: 78px; }
+.ans:active { transform: scale(.96); }
+.ans.right { box-shadow: 0 0 0 4px var(--leaf), var(--sh-m); background: var(--ok-soft); }
+.ans.wrong { box-shadow: 0 0 0 4px var(--pink), var(--sh-s); background: var(--bad-soft); opacity: .55; animation: shake .35s; }
+.ans.reveal { box-shadow: 0 0 0 4px var(--leaf), var(--sh-m); }
+.ans.picked { box-shadow: 0 0 0 4px var(--violet), var(--sh-m); }
+.ans .mark { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 900; font-size: 15px; background: rgba(var(--shadow-rgb), .15); }
+.ans.picked .mark { background: var(--violet); }
+.ans.right .mark { background: var(--leaf); }
+.ans.wrong .mark { background: var(--pink); }
 @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-.say { display: grid; grid-template-columns: 64px 1fr; gap: 8px; align-items: end; }
-.say img { width: 64px; height: 64px; }
-.say p { background: var(--night); color: #fff; border-radius: 18px 18px 18px 4px; padding: 10px 13px; font-weight: 800; font-size: 15px; line-height: 1.3; }
-.say p b { color: var(--sun); }
-.say.good p { background: var(--jade); }
+.ans.done { opacity: .35; pointer-events: none; }
+
+/* по порядку */
+.slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.slot { width: 66px; display: grid; justify-items: center; gap: 3px; }
+.slot .box { width: 66px; height: 66px; border-radius: 18px; border: 2.5px dashed rgba(var(--shadow-rgb), .2); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 22px; color: rgba(var(--shadow-rgb), .3); }
+.slot .box img { width: 100%; height: 100%; }
+.slot.filled .box { border: 0; animation: pop .3s; }
+.slot small { font-size: 11px; font-weight: 900; color: var(--ink-soft); width: 66px; text-align: center; line-height: 1.1; min-height: 1.1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@keyframes pop { 0% { transform: scale(.6); } 70% { transform: scale(1.08); } }
+/* пары */
+.match { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.match .col { display: grid; gap: 10px; align-content: start; }
+.match .ans { grid-template-columns: 58px 1fr; justify-items: start; text-align: left; padding: 6px 10px 6px 6px; font-size: 15px; border-radius: 20px; }
+.match .ans img { width: 58px; }
+.match .ans.paired { box-shadow: 0 0 0 4px var(--leaf), var(--sh-s); background: var(--ok-soft); pointer-events: none; }
+
+.say { display: grid; grid-template-columns: 62px 1fr; gap: 8px; align-items: end; }
+.say img { width: 62px; height: 62px; border-radius: 50%; box-shadow: var(--sh-s); }
+.say p { background: var(--card); border-radius: 20px 20px 20px 4px; padding: 11px 14px; font-weight: 800; font-size: 15px; line-height: 1.3; box-shadow: var(--sh-s); }
+.say p b { color: var(--violet-deep); }
+.say.good p { background: linear-gradient(155deg, var(--leaf), var(--leaf-deep)); color: #fff; }
 .say.good p b { color: #fff; }
 
 /* финал */
 .result { align-items: center; text-align: center; }
-.result .big { width: 200px; height: 200px; margin-top: 8px; }
-.plus-stars { font-family: var(--display); font-weight: 800; font-size: 48px; color: var(--tangerine); display: flex; align-items: center; gap: 8px; }
-.plus-stars img { width: 52px; height: 52px; }
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
-.stat b { font-family: var(--display); font-size: 24px; display: block; }
+.result .big { width: 200px; height: 200px; border-radius: 50%; box-shadow: var(--sh-m); margin-top: 6px; }
+.result h2 { font-size: 30px; }
+.plus-stars { font-family: var(--display); font-weight: 800; font-size: 54px; color: var(--sun-deep); display: flex; align-items: center; gap: 8px; line-height: 1; }
+.plus-stars img { width: 54px; height: 54px; border-radius: 50%; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+.stat b { font-family: var(--display); font-size: 28px; display: block; line-height: 1.1; }
 .stat span { font-size: 13px; font-weight: 800; color: var(--ink-soft); }
 
-/* родителям */
-.bento { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* для взрослых */
+.bento { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .bento .wide { grid-column: 1 / -1; }
-.k { font-size: 13px; font-weight: 800; color: var(--ink-soft); }
-.v { font-family: var(--display); font-weight: 800; font-size: 28px; line-height: 1.1; }
-.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 8px; }
-.week i { aspect-ratio: 1; border-radius: 7px; background: var(--surface-2); border: 1.5px solid var(--line); font-style: normal; font-size: 10px; font-weight: 900; display: grid; place-items: center; color: var(--ink-soft); }
-.week i.on { background: var(--jade); border-color: var(--jade); color: #fff; }
-.ring { width: 70px; height: 70px; border-radius: 50%; display: grid; place-items: center; margin-top: 6px; }
-.ring b { width: 52px; height: 52px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; font-weight: 900; font-size: 15px; }
-.trow { display: grid; grid-template-columns: 1fr 70px 42px; gap: 8px; align-items: center; font-size: 14px; font-weight: 800; padding: 5px 0; }
+.k { font-size: 13px; font-weight: 900; color: var(--ink-soft); }
+.v { font-family: var(--display); font-weight: 800; font-size: 32px; line-height: 1.05; }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
+.week i { aspect-ratio: 1; border-radius: 50%; background: rgba(var(--shadow-rgb), .08); font-style: normal; font-size: 10px; font-weight: 900; display: grid; place-items: center; color: var(--ink-soft); }
+.week i.on { background: linear-gradient(155deg, var(--leaf), var(--leaf-deep)); color: #fff; }
+.ring { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; margin-top: 6px; }
+.ring b { width: 56px; height: 56px; border-radius: 50%; background: var(--card); display: grid; place-items: center; font-weight: 900; font-size: 16px; }
+.trow { display: grid; grid-template-columns: 1fr 76px 42px; gap: 8px; align-items: center; font-size: 14px; font-weight: 800; padding: 5px 0; }
 .trow .bar { margin: 0; height: 9px; }
-.trow .bar > i { background: var(--jade); }
-.trow.low .bar > i { background: var(--berry); }
+.trow .bar > i { background: linear-gradient(90deg, var(--leaf), var(--leaf-deep)); }
+.trow.low .bar > i { background: linear-gradient(90deg, var(--pink), var(--coral)); }
 .trow span:last-child { text-align: right; color: var(--ink-soft); }
-.tip { background: var(--sky-soft); border-radius: 18px; padding: 12px; font-size: 14px; font-weight: 700; line-height: 1.4; }
+.tip { background: linear-gradient(155deg, #EAF4FF, #F3EEFF); border-radius: 22px; padding: 14px; font-size: 14px; font-weight: 700; line-height: 1.4; }
 .tip b { display: block; font-weight: 900; margin-bottom: 2px; }
-.setting { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 800; font-size: 15px; padding: 6px 0; }
-.setting button { background: var(--surface-2); border: 1.5px solid var(--line); border-radius: 12px; padding: 7px 12px; font-weight: 900; font-size: 14px; }
+.setting { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 800; font-size: 15px; padding: 8px 0; border-bottom: 1.5px solid rgba(var(--shadow-rgb), .07); }
+.setting:last-child { border-bottom: 0; }
+.setting button.s { background: rgba(var(--shadow-rgb), .07); border-radius: 999px; padding: 8px 14px; font-weight: 900; font-size: 14px; }
+.stepper { display: inline-flex; align-items: center; gap: 4px; background: rgba(var(--shadow-rgb), .07); border-radius: 999px; padding: 4px; }
+.stepper button { width: 34px; height: 34px; border-radius: 50%; background: var(--card); font-weight: 900; font-size: 20px; box-shadow: var(--sh-s); }
+.stepper b { min-width: 28px; text-align: center; font-family: var(--display); font-size: 20px; }
 .muted { color: var(--ink-soft); font-size: 13px; font-weight: 700; }
 
-/* слои: выбор таймера, блокировка, вопрос взрослому, тост */
-.layer { position: fixed; inset: 0; z-index: 20; background: rgba(29,39,66,.55); display: flex; align-items: flex-end; justify-content: center; }
-.sheet { width: 100%; max-width: 560px; background: var(--surface); border-radius: 28px 28px 0 0; padding: 20px 18px calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 12px; }
-.sheet h3 { font-size: 19px; }
-.sheet p { font-size: 14px; font-weight: 700; color: var(--ink-soft); line-height: 1.4; }
-.mins { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.mins button { background: var(--surface-2); border: 2px solid var(--line); border-radius: 16px; padding: 12px; font-weight: 900; font-size: 16px; }
-.mins button.on { border-color: var(--tangerine); background: var(--sun-soft); }
+/* слои */
+.layer { position: fixed; inset: 0; z-index: 20; background: rgba(46,42,74,.45); display: flex; align-items: flex-end; justify-content: center; }
+.sheet { width: 100%; max-width: 560px; background: var(--card); border-radius: 30px 30px 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 12px; }
+.sheet h3 { font-size: 24px; }
+.sheet p { font-size: 15px; font-weight: 700; color: var(--ink-soft); line-height: 1.4; }
+.mins { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mins button { background: rgba(var(--shadow-rgb), .06); border-radius: 18px; padding: 14px; font-family: var(--display); font-weight: 800; font-size: 19px; }
+.mins button.on { background: linear-gradient(155deg, var(--violet), var(--violet-deep)); color: #fff; }
 .mins .wide { grid-column: 1 / -1; }
-.lock { position: fixed; inset: 0; z-index: 30; background: var(--cream); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; padding: 24px; }
-.lock .owl { width: 170px; height: 170px; }
-.lock .zz { font-family: var(--display); font-weight: 800; color: var(--tangerine); font-size: 24px; letter-spacing: .12em; margin-bottom: -12px; }
-.lock h2 { font-size: 24px; }
-.lock p { font-weight: 700; font-size: 15px; color: var(--ink-soft); max-width: 28ch; }
-.lock .btn-ghost { background: #fff; color: var(--ink); border-color: var(--line); max-width: 360px; }
-.gate { width: 100%; max-width: 360px; display: grid; gap: 10px; background: #fff; border: 2px solid var(--line); color: var(--ink); border-radius: 22px; padding: 14px; }
-.gate b { font-size: 14px; }
-.gate .ex { font-family: var(--display); font-weight: 800; font-size: 28px; }
-.gate input { width: 100%; font: inherit; font-weight: 900; font-size: 22px; text-align: center; border: 2px solid var(--line); border-radius: 14px; padding: 9px; color: var(--ink); background: var(--surface-2); }
-.gate .err { color: #E0457A; font-weight: 800; font-size: 13px; min-height: 1.2em; }
-.toast { position: fixed; left: 16px; right: 16px; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 40; background: var(--night); color: #fff; border-radius: 16px; padding: 12px 14px; font-weight: 800; font-size: 15px; box-shadow: var(--shadow); max-width: 528px; margin: 0 auto; }
+.lock { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; padding: 24px;
+  background: radial-gradient(circle at 50% 30%, rgba(142,108,255,.25), transparent 60%), linear-gradient(180deg, var(--bg-a), var(--bg-b)); }
+.lock .owl { width: 180px; height: 180px; border-radius: 50%; box-shadow: var(--sh-m); }
+.lock .zz { font-family: var(--display); font-weight: 800; color: var(--violet); font-size: 28px; letter-spacing: .15em; margin-bottom: -14px; }
+.lock h2 { font-size: 30px; }
+.lock p { font-weight: 800; font-size: 16px; color: var(--ink-soft); max-width: 28ch; }
+.lock .btn-white { max-width: 360px; }
+.gate { width: 100%; max-width: 360px; display: grid; gap: 10px; background: var(--card); border-radius: 26px; padding: 16px; box-shadow: var(--sh-m); }
+.gate b { font-size: 14px; color: var(--ink-soft); }
+.gate .ex { font-family: var(--display); font-weight: 800; font-size: 34px; }
+.gate input { width: 100%; font: inherit; font-family: var(--display); font-weight: 800; font-size: 26px; text-align: center; border: 3px solid var(--violet); border-radius: 999px; padding: 8px; color: var(--ink); background: var(--card); user-select: text; -webkit-user-select: text; }
+.gate .err { color: var(--pink-deep); font-weight: 800; font-size: 13px; min-height: 1.2em; }
+.toast { position: fixed; left: 16px; right: 16px; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 40; background: linear-gradient(155deg, var(--violet), var(--violet-deep)); color: #fff; border-radius: 20px; padding: 13px 16px; font-weight: 800; font-size: 15px; box-shadow: var(--sh-m); max-width: 528px; margin: 0 auto; }
 
 /* имя */
 .onboard { align-items: center; justify-content: center; text-align: center; gap: 16px; }
-.onboard .owl { width: 190px; height: 190px; }
-.onboard input { width: 100%; max-width: 340px; font: inherit; font-weight: 900; font-size: 22px; text-align: center; border: 2px solid var(--line); border-radius: 18px; padding: 12px; background: var(--surface); color: var(--ink); user-select: text; -webkit-user-select: text; }
-.onboard .btn-main, .onboard .btn-ghost { max-width: 340px; }
+.onboard .owl { width: 200px; height: 200px; border-radius: 50%; box-shadow: var(--sh-m); }
+.onboard h1 { font-size: 32px; }
+.onboard input { width: 100%; max-width: 320px; font: inherit; font-family: var(--display); font-weight: 800; font-size: 24px; text-align: center; border: 3px solid var(--coral); border-radius: 999px; padding: 12px 16px; background: var(--card); color: var(--ink); box-shadow: var(--sh-s); user-select: text; -webkit-user-select: text; }
+.onboard .btn, .onboard .btn-white { max-width: 320px; }
 .loading { flex: 1; display: grid; place-items: center; font-weight: 800; color: var(--ink-soft); }
 
+@media (max-width: 340px) { .answers.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .qtext { font-size: 20px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -214,6 +267,7 @@ D.ui.mascot.forEach(function (k) { MASCOT[k.split("/")[1].replace(/^\d+_/, "")] 
 var M = function (pose) { return IMG(MASCOT[pose] || MASCOT.wave); };
 var TASK_INDEX = {};
 D.tasks.forEach(function (t, i) { TASK_INDEX[t.id] = i; });
+var INTERACTIVE = { order: 1, match: 1, parts: 1 };
 
 /* ---------- время (по Москве) ---------- */
 var DAY = 86400000;
@@ -228,10 +282,7 @@ function lsSet(k, v) { try { localStorage.setItem("tim_" + k, v); } catch (e) {}
 function parse(v, def) { try { return v ? JSON.parse(v) : def; } catch (e) { return def; } }
 function load(cb) {
   function apply(vals) {
-    S.core = parse(vals.core, null);
-    S.seen = parse(vals.seen, []);
-    S.stats = parse(vals.stats, {});
-    S.timer = parse(vals.timer, null);
+    S.core = parse(vals.core, null); S.seen = parse(vals.seen, []); S.stats = parse(vals.stats, {}); S.timer = parse(vals.timer, null);
     cb();
   }
   var local = {};
@@ -243,7 +294,6 @@ function load(cb) {
     if (done) return;
     done = true; clearTimeout(t);
     if (err || !vals) { apply(local); return; }
-    // в облаке пусто, а на телефоне что-то есть — берём телефон
     KEYS.forEach(function (k) { if (!vals[k] && local[k]) vals[k] = local[k]; });
     apply(vals);
   });
@@ -257,6 +307,7 @@ function core() {
   if (!S.core) S.core = { name: null, stars: 0, streak: 0, last: 0, gd: 0, gn: 0, lv: {}, voice: 1, asked: 0 };
   return S.core;
 }
+function perDay() { return core().perDay || D.perDay; }
 
 /* ---------- звук ---------- */
 var player = new Audio();
@@ -265,16 +316,13 @@ var unlocked = false;
 document.addEventListener("pointerdown", function () {
   if (unlocked) return;
   unlocked = true;
-  // «разблокируем» плеер на iOS: дальше он играет и без касания
-  player.src = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQxAADB8AhSmxhIIEVCSiJrDCQBTcu3UrAIwUdkRgQbFAZC1CQEwTJ9mjRvBA4UOLD8nKVOWfh+UlK3z/177OXrfOdKl7pyn3Xf//WreyTRUoAWgBgkOAGbZHBgG1OF6zM82DWbZaUmMBptgQhGjsyYqc9ae9XFz280948NMBWInljyzsNRFLPWdnZGWrddDsjK1unuSrVN9jJsK8KuQtQCtMBjCEtImISdNKJOopIpBFpNSMbIHCSRpRR5iakjTiyzLhchUUBwCgyKiweBv/7UsQbg8isVNoMPMjAAAA0gAAABEVFGmgqK////9bP/6XCykxBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
   var p = player.play(); if (p && p.catch) p.catch(function () {});
 }, true);
 var speakBtn = null;
 function play(file) {
   if (!file || !core().voice) return;
   try {
-    player.pause();
-    player.src = "a/" + file;
+    player.pause(); player.src = "a/" + file;
     var p = player.play(); if (p && p.catch) p.catch(function () {});
     if (speakBtn) { speakBtn.classList.remove("on"); void speakBtn.offsetWidth; speakBtn.classList.add("on"); }
   } catch (e) {}
@@ -290,13 +338,14 @@ function nextIsland(stars) { for (var i = 0; i < D.islands.length; i++) if (D.is
 function stripEmoji(s) { return s.replace(/^\S+\s/, ""); }
 function starWord(n) { var m = n % 10, h = n % 100; if (m === 1 && h !== 11) return "звезда"; if (m >= 2 && m <= 4 && (h < 12 || h > 14)) return "звезды"; return "звёзд"; }
 function gamesToday() { var c = core(); return c.gd === dayNum() ? c.gn : 0; }
+function img(k, cls) { return '<img class="tile-img' + (cls ? " " + cls : "") + '" src="' + IMG(k) + '" alt="">'; }
 
-/* ---------- сборка игры (как в боте: app/tasks.py) ---------- */
+/* ---------- сборка игры ---------- */
 var BY_BLOCK = {};
 D.tasks.forEach(function (t) { (BY_BLOCK[t.b] = BY_BLOCK[t.b] || []).push(t); });
 function seenSet() { var s = {}, from = dayNum() - 14; S.seen.forEach(function (p) { if (p[1] >= from) s[p[0]] = 1; }); return s; }
-function pickInBlock(block, level, seen, taken) {
-  var pool = (BY_BLOCK[block] || []).filter(function (t) { return !taken[t.id]; });
+function pickFrom(pool, level, seen, taken) {
+  pool = pool.filter(function (t) { return !taken[t.id]; });
   var conds = [
     function (t) { return t.l === level && !seen[TASK_INDEX[t.id]]; },
     function (t) { return t.l <= level && !seen[TASK_INDEX[t.id]]; },
@@ -319,7 +368,17 @@ function buildSession() {
   var others = shuffle(Object.keys(BY_BLOCK).filter(function (b) { return D.core.indexOf(b) < 0; }));
   var plan = D.core.concat(others); plan = plan.concat(plan).slice(0, n);
   var chosen = [], taken = {};
-  plan.forEach(function (b) { var t = pickInBlock(b, (lv[b] || [1])[0], seen, taken); if (t) { chosen.push(t); taken[t.id] = 1; } });
+  // В каждой игре — два задания-игры (по порядку / пары / части), остальное — вопросы.
+  var inter = D.tasks.filter(function (t) { return INTERACTIVE[t.m]; });
+  for (var i = 0; i < 2; i++) {
+    var avg = 1 + Math.round(Object.keys(lv).reduce(function (s, b) { return s + lv[b][0] - 1; }, 0) / Math.max(1, Object.keys(lv).length));
+    var t = pickFrom(inter, avg, seen, taken);
+    if (t) { chosen.push(t); taken[t.id] = 1; }
+  }
+  plan.slice(0, n - chosen.length).forEach(function (b) {
+    var t = pickFrom((BY_BLOCK[b] || []).filter(function (x) { return !INTERACTIVE[x.m]; }), (lv[b] || [1])[0], seen, taken);
+    if (t) { chosen.push(t); taken[t.id] = 1; }
+  });
   for (var strict = 1; strict >= 0; strict--) for (var k = 0; k < 300; k++) { shuffle(chosen); if (neighboursOk(chosen, !!strict)) return chosen; }
   return chosen;
 }
@@ -373,7 +432,7 @@ function gate(box, title, onPass) {
   var ex;
   function fresh() { var a = 6 + Math.floor(Math.random() * 4), b = 6 + Math.floor(Math.random() * 4); ex = { q: a + " × " + b + " = ?", a: a * b }; }
   fresh();
-  box.innerHTML = "<b>" + esc(title) + '</b><div class="ex num">' + ex.q + '</div><input type="text" inputmode="numeric" autocomplete="off" aria-label="Ответ взрослого"><div class="err" aria-live="polite"></div><button class="btn-main" type="button" style="font-size:18px">Проверить</button>';
+  box.innerHTML = "<b>" + esc(title) + '</b><div class="ex num">' + ex.q + '</div><input type="text" inputmode="numeric" autocomplete="off" aria-label="Ответ взрослого"><div class="err" aria-live="polite"></div><button class="btn b-violet" type="button" style="font-size:20px">Проверить</button>';
   var input = box.querySelector("input");
   function check() {
     if (parseInt(input.value, 10) === ex.a) { onPass(); return; }
@@ -392,12 +451,16 @@ function layer(html) {
   document.body.appendChild(l); return l;
 }
 function closeLayers() { Array.prototype.forEach.call(document.querySelectorAll(".layer"), function (n) { n.remove(); }); }
+function adultLayer(title, onPass) {
+  var l = layer("<h3>Для взрослых</h3>" + '<div class="gate" style="max-width:none;box-shadow:none;padding:0"></div><button class="btn-white" type="button" data-close>Отмена</button>');
+  gate(l.querySelector(".gate"), title, function () { l.remove(); onPass(); });
+}
 function toast(text) {
   var t = document.createElement("div"); t.className = "toast"; t.textContent = text;
   document.body.appendChild(t); setTimeout(function () { t.remove(); }, 4500);
 }
 
-function openTimer(fromParents) {
+function openTimer() {
   if (TIMER().locked) { showLock(); return; }
   var running = timerLeft() !== null;
   var cur = running ? Math.round(TIMER().total / 60000) : 0;
@@ -405,13 +468,13 @@ function openTimer(fromParents) {
     (running ? " <b>Сейчас осталось " + fmt(timerLeft()) + ".</b>" : "") + "</p>" +
     '<div class="mins">' + [10, 15, 20, 30].map(function (m) { return '<button type="button" data-min="' + m + '"' + (cur === m ? ' class="on"' : "") + ">" + m + " мин</button>"; }).join("") +
     '<button type="button" class="wide' + (!running ? " on" : "") + '" data-min="0">Без таймера</button></div>' +
-    '<button class="btn-ghost" type="button" data-close>Закрыть</button>');
+    '<button class="btn-white" type="button" data-close>Закрыть</button>');
   l.addEventListener("click", function (e) {
     var b = e.target.closest("[data-min]"); if (!b) return;
     var min = +b.dataset.min;
     if (running) {
       var sheet = l.querySelector(".sheet"), box = document.createElement("div");
-      box.className = "gate"; box.style.maxWidth = "none"; sheet.innerHTML = ""; sheet.appendChild(box);
+      box.className = "gate"; box.style.cssText = "max-width:none;box-shadow:none;padding:0"; sheet.innerHTML = ""; sheet.appendChild(box);
       gate(box, "Таймер уже идёт. Изменить его может только взрослый:", function () { setTimer(min); l.remove(); render(); });
       return;
     }
@@ -425,7 +488,7 @@ function showLock() {
   var l = document.createElement("div"); l.className = "lock";
   l.innerHTML = '<div class="zz">z z z</div><img class="owl" src="' + M("sleeping_nest") + '" alt="">' +
     "<h2>Время занятия вышло!</h2><p>Тим ложится отдохнуть. Позови маму или папу — игра подождёт тебя на том же месте.</p>" +
-    '<button class="btn-ghost" type="button">Я взрослый — разрешить продолжить</button>';
+    '<button class="btn-white" type="button">Я взрослый — разрешить продолжить</button>';
   document.body.appendChild(l);
   play(D.say.locked);
   l.querySelector("button").addEventListener("click", function () {
@@ -434,7 +497,7 @@ function showLock() {
     gate(box, "Вопрос для взрослого", function () {
       S.timer = { ends: 0, total: 0, warned: 0, locked: 0 }; save("timer");
       l.remove(); haptic("success");
-      if (G && G.idx < G.tasks.length) { play(D.say.resume); }
+      if (G && G.idx < G.tasks.length) play(D.say.resume);
       render(); openTimer();
     });
   });
@@ -445,11 +508,11 @@ var view = "home", G = null;
 function tabbar() {
   var tabs = [["home", "Дом", "03_ui/30_home"], ["map", "Карта", "02_islands/29_compass"], ["parents", "Взрослым", "03_ui/07_topic_family"]];
   return '<nav class="tabbar">' + tabs.map(function (t) {
-    return '<button class="tab' + (view === t[0] ? " on" : "") + '" type="button" data-go="' + t[0] + '"><span class="ic"><img src="' + IMG(t[2]) + '" alt=""></span>' + t[1] + "</button>";
+    return '<button class="tab' + (view === t[0] ? " on" : "") + '" type="button" data-go="' + t[0] + '"><img src="' + IMG(t[2]) + '" alt="">' + t[1] + "</button>";
   }).join("") + "</nav>";
 }
 function render() {
-  if (tg && tg.BackButton) { if (view === "game" || view === "result") tg.BackButton.hide(); else if (view === "home") tg.BackButton.hide(); else tg.BackButton.show(); }
+  if (tg && tg.BackButton) { if (view === "map" || view === "parents") tg.BackButton.show(); else tg.BackButton.hide(); }
   if (!core().asked) return renderName();
   if (view === "home") renderHome();
   else if (view === "map") renderMap();
@@ -458,48 +521,52 @@ function render() {
 }
 
 function renderName() {
-  var suggested = "";
   $app.innerHTML = '<div class="screen onboard"><img class="owl" src="' + M("wave") + '" alt="Совёнок Тим">' +
-    "<h1>Привет! Я совёнок Тим</h1><p class=\"muted\" style=\"font-size:16px\">Вместе мы долетим до самой школы — остров за островом. А как тебя зовут?</p>" +
-    '<input id="name" maxlength="20" placeholder="Имя" value="' + esc(suggested) + '">' +
-    '<button class="btn-main" type="button" id="go">Полетели!</button><button class="btn-ghost" type="button" id="skip">Пропустить</button></div>';
+    '<h1>Как тебя зовут?</h1><p class="muted" style="font-size:16px">Я совёнок Тим! Вместе долетим до самой школы — остров за островом.</p>' +
+    '<input id="name" maxlength="20" placeholder="Имя">' +
+    '<button class="btn b-coral" type="button" id="go">Полетели!</button><button class="btn-white" type="button" id="skip">Пропустить</button></div>';
   function done(name) { var c = core(); c.name = name || null; c.asked = 1; save("core"); play(D.say.hello); view = "home"; render(); }
   document.getElementById("go").onclick = function () { done(document.getElementById("name").value.trim().replace(/[^A-Za-zА-Яа-яЁё\- ]/g, "").slice(0, 20)); };
   document.getElementById("skip").onclick = function () { done(null); };
 }
 
 function renderHome() {
-  var c = core(), isl = island(c.stars), nx = nextIsland(c.stars), used = gamesToday(), left = D.perDay - used;
-  var dots = ""; for (var i = 0; i < D.perDay; i++) dots += "<i" + (i < used ? "" : ' class="off"') + "></i>";
+  var c = core(), isl = island(c.stars), nx = nextIsland(c.stars), used = gamesToday(), left = perDay() - used;
+  var dots = ""; for (var i = 0; i < perDay(); i++) dots += "<i" + (i < used ? "" : ' class="off"') + "></i>";
   var bubble = left > 0 ? (nx ? "Летим к острову «" + stripEmoji(nx.name) + "»! Собирай звёзды!" : "Ты прошёл все острова! Ты готов к школе!") : "На сегодня игры закончились. Приходи завтра!";
-  var streak = c.streak > 1 && c.last >= dayNum() - 1 ? '<span class="chip num"><img src="' + IMG("03_ui/16_flame") + '" alt="">' + c.streak + "</span>" : "";
+  var streak = c.streak > 1 && c.last >= dayNum() - 1 ? '<span class="pill num"><img src="' + IMG("03_ui/16_flame") + '" alt="">' + c.streak + "</span>" : "";
   $app.innerHTML = '<div class="screen">' +
-    '<div class="top"><div class="hello"><div><b>' + (c.name ? "Привет, " + esc(c.name) + "!" : "Привет!") + '</b><span>Мы на острове «' + esc(stripEmoji(isl.name)) + '»</span></div></div>' +
-    '<div style="display:flex;gap:6px;align-items:center">' + pillHtml() + streak + '<span class="chip num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + c.stars + '</span>' +
+    '<div class="top"><span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + c.stars + "</span>" + streak +
+    '<div style="display:flex;gap:8px;align-items:center;margin-left:auto">' + pillHtml() +
     '<button class="icon-btn" type="button" data-timer aria-label="Таймер занятия"><img src="' + IMG("03_ui/06_topic_time") + '" alt=""></button></div></div>' +
-    '<div class="hero"><div class="eyebrow">Сегодня</div><div class="bubble">' + esc(bubble) + '</div><img class="owl" src="' + M(left > 0 ? "hint_point" : "sleeping_nest") + '" alt=""></div>' +
-    '<button class="btn-main" type="button" data-play' + (left > 0 ? "" : " disabled") + ">Играть<small>" + (left > 0 ? D.perSession + " заданий · около 10 минут" : "Новые игры — завтра") + "</small></button>" +
-    '<div class="row-info"><span>Игр сегодня: ' + used + " из " + D.perDay + '</span><span class="dots">' + dots + "</span></div>" +
-    (nx ? '<div class="card next"><img src="' + IMG(D.ui.islands[nx.idx]) + '" alt=""><div><b>' + esc(stripEmoji(nx.name)) + '</b> <span class="k num">· ещё ' + (nx.need - c.stars) + ' ⭐</span>' +
-      '<div class="bar"><i style="width:' + Math.round(100 * (c.stars - D.islands[nx.idx - 1][0]) / (nx.need - D.islands[nx.idx - 1][0])) + '%"></i></div><small class="num">' + c.stars + " из " + nx.need + " звёзд</small></div></div>" : "") +
+    '<div class="talk"><img class="owl" src="' + M(left > 0 ? "wave" : "sleeping_nest") + '" alt=""><div class="bubble">' + esc(c.name ? c.name + ", " + bubble[0].toLowerCase() + bubble.slice(1) : bubble) + "</div></div>" +
+    '<div class="title"><h1>Совёнок Тим</h1><p>Остров «' + esc(stripEmoji(isl.name)) + "» · игр сегодня " + used + " из " + perDay() + "</p></div>" +
+    '<button class="hero-card b-violet" type="button" data-play' + (left > 0 ? "" : " disabled") + ">" +
+    "<h2>" + (left > 0 ? "Играть!" : "До завтра!") + "</h2><p>" + (left > 0 ? D.perSession + " заданий · около 10 минут" : "Новые игры откроются завтра") + "</p>" +
+    '<img class="owl" src="' + M(left > 0 ? "flying" : "sleeping_nest") + '" alt=""></button>' +
+    '<div class="row-info"><span>Игры на сегодня</span><span class="dots">' + dots + "</span></div>" +
+    (nx ? '<div class="card next"><img class="tile-img" src="' + IMG(D.ui.islands[nx.idx]) + '" alt=""><div><b>' + esc(stripEmoji(nx.name)) + '</b>' +
+      '<div class="bar"><i style="width:' + Math.round(100 * (c.stars - D.islands[nx.idx - 1][0]) / (nx.need - D.islands[nx.idx - 1][0])) + '%"></i></div><small class="num">ещё ' + (nx.need - c.stars) + " " + starWord(nx.need - c.stars) + " · " + c.stars + " из " + nx.need + "</small></div></div>" : "") +
     "</div>" + tabbar();
+  if (left <= 0) document.querySelector(".hero-card").className = "hero-card b-sky";
 }
 
 function renderMap() {
   var c = core(), cur = island(c.stars).idx;
   var items = D.islands.map(function (x, i) {
     var st = i < cur ? "done" : i === cur ? "now" : "closed";
-    return '<div class="isle ' + st + '"><div class="isle-pic"><img class="i" src="' + IMG(D.ui.islands[i]) + '" alt="">' + (st === "now" ? '<img class="owl" src="' + M("flying") + '" alt="">' : "") + "</div>" +
-      "<div><b>" + esc(stripEmoji(x[1])) + "</b><small>" + (st === "done" ? '<span class="tick">✓ пройден</span>' : st === "now" ? "ты здесь" : x[0] + " ⭐") + "</small></div></div>";
-  }).reverse().join("");
-  $app.innerHTML = '<div class="screen"><div class="top"><h2 style="font-size:22px">Карта островов</h2><span class="chip num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + c.stars + '</span></div><div class="map">' + items + "</div></div>" + tabbar();
+    return '<div class="isle ' + st + '">' + img(D.ui.islands[i], "i") +
+      "<div><b>" + esc(stripEmoji(x[1])) + "</b><small>" + (st === "closed" ? "нужно " + x[0] + " ⭐" : x[0] + " ⭐") + "</small>" +
+      (st === "done" ? '<br><span class="tag">✓ пройден</span>' : st === "now" ? '<br><span class="tag">ты здесь</span>' : "") + "</div></div>";
+  }).join("");
+  $app.innerHTML = '<div class="screen"><div class="top"><h1 style="font-size:28px">Карта островов</h1><span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + c.stars + '</span></div><div class="map">' + items + "</div></div>" + tabbar();
   var now = document.querySelector(".isle.now"); if (now) now.scrollIntoView({ block: "center" });
 }
 
 /* ---------- игра ---------- */
 function startGame() {
   if (TIMER().locked) { showLock(); return; }
-  if (gamesToday() >= D.perDay) { render(); play(D.say.tired); return; }
+  if (gamesToday() >= perDay()) { render(); play(D.say.tired); return; }
   var c = core(), today = dayNum();
   if (c.gd !== today) { c.gd = today; c.gn = 0; }
   c.gn++;
@@ -508,55 +575,163 @@ function startGame() {
   G = { tasks: buildSession(), idx: 0, marks: [], stars: 0, first: 0, starsBefore: c.stars };
   view = "game";
   play(D.say.start);
-  setTimeout(function () { renderTask(); }, 300);
   renderTask(true);
+  setTimeout(function () { if (G && G.idx === 0) play(G.tasks[0].qa); }, 2200);
 }
 function picHtml(t, phase) {
   if (phase === "remember") {
-    var row = t.si ? t.si.map(function (k) { return '<img class="seq" src="' + IMG(k) + '" alt="">'; }).join("") : '<span class="emojirow">' + t.sh.join(" ") + "</span>";
+    var row = t.si ? t.si.map(function (k) { return img(k, "seq"); }).join("") : '<span class="emojirow">' + t.sh.join(" ") + "</span>";
     return '<div class="pic"><div class="remember">👀 Запоминай!</div>' + row + "</div>";
   }
-  if (t.seq) return '<div class="pic">' + t.seq.map(function (k) { return '<img class="seq" src="' + IMG(k) + '" alt="">'; }).join("") + "</div>";
+  if (t.seq) return '<div class="pic">' + t.seq.map(function (k) { return img(k, "seq"); }).join("") + "</div>";
   if (t.g) return '<div class="pic">' + t.g.map(function (g, i) {
     var imgs = ""; for (var j = 0; j < g[1]; j++) imgs += '<img src="' + IMG(g[0]) + '" alt="">';
     return (i && t.gop === "+" ? '<span class="plus">+</span>' : "") + '<div class="grp">' + imgs + "</div>";
   }).join("") + "</div>";
   if (t.sh) return '<div class="pic"><div class="remember">🙈 Картинки спрятались!</div></div>';
-  if (t.i) return '<div class="pic"><img class="main" src="' + IMG(t.i) + '" alt=""></div>';
+  if (t.whole) return '<div class="pic">' + img(t.whole[1], "main") + "</div>";
+  if (t.i) return '<div class="pic">' + img(t.i, "main") + "</div>";
   return "";
+}
+function answersClass(labels) {
+  var long = labels.some(function (o) { return o.length > 14; });
+  if (long) return "";
+  if (labels.length === 4 || labels.length === 2) return "cols-2";
+  return "cols-3";
+}
+function ansButton(i, label, key, extra) {
+  var row = extra && extra.row;
+  return '<button class="ans' + (row ? " row" : "") + (extra && extra.cls ? " " + extra.cls : "") + '" type="button" data-' + (extra && extra.attr || "ans") + '="' + i + '"' + (extra && extra.disabled ? " disabled" : "") + ">" +
+    (key ? img(key) : "") + "<span>" + esc(label) + "</span>" + (extra && extra.mark ? '<span class="mark">' + extra.mark + "</span>" : "") + "</button>";
 }
 function renderTask(silent) {
   if (!G) { view = "home"; render(); return; }
   var t = G.tasks[G.idx];
-  if (!G.cur || G.cur.id !== t.id) G.cur = { id: t.id, attempt: 0, removed: {}, phase: t.sh ? "remember" : "ask", done: false };
+  if (!G.cur || G.cur.id !== t.id) {
+    G.cur = { id: t.id, attempt: 0, removed: {}, phase: t.sh ? "remember" : "ask", done: false, mistakes: 0, hinted: false };
+    if (t.m === "order") { G.cur.placed = 0; G.cur.shuffled = shuffle(t.items.map(function (_, i) { return i; })); }
+    if (t.m === "match") { G.cur.right = shuffle(t.pairs.map(function (_, i) { return i; })); G.cur.sel = null; G.cur.paired = {}; }
+    if (t.m === "parts") { G.cur.picked = {}; }
+  }
   var st = G.cur, lv = (core().lv[t.b] || [1])[0];
   var pebbles = G.tasks.map(function (_, i) { return "<i" + (G.marks[i] ? ' class="' + G.marks[i] + '"' : i === G.idx ? ' class="now"' : "") + "></i>"; }).join("");
-  var answers = "";
-  if (st.phase === "ask") {
-    var allImg = !!t.oi, emoji = !t.oi && t.o.every(function (o) { return !/[A-Za-zА-Яа-яЁё0-9]/.test(o); });
-    answers = '<div class="answers' + ((emoji || (t.o.length === 4 && !allImg) || t.o.every(function (o) { return o.length <= 3; })) ? " grid2" : "") + '">' +
-      t.o.map(function (o, i) {
-        var cls = "ans" + (allImg ? "" : " noimg") + (emoji ? " emoji" : "") + (st.removed[i] ? " wrong" : "");
-        return '<button class="' + cls + '" type="button" data-ans="' + i + '"' + (st.removed[i] ? " disabled" : "") + ">" + (allImg ? '<img src="' + IMG(t.oi[i]) + '" alt="">' : "") + "<span>" + esc(o) + "</span></button>";
-      }).join("") + "</div>";
+  var body = "";
+  if (t.m === "order") body = orderHtml(t, st);
+  else if (t.m === "match") body = matchHtml(t, st);
+  else if (t.m === "parts") body = partsHtml(t, st);
+  else if (st.phase === "ask") {
+    var lbls = t.o, cls = answersClass(lbls), rowMode = cls === "";
+    body = '<div class="answers ' + cls + '">' + t.o.map(function (o, i) {
+      return ansButton(i, o, t.oi && t.oi[i], { row: rowMode, cls: st.removed[i] ? "wrong" : "", disabled: st.removed[i] });
+    }).join("") + "</div>";
   }
   var topicImg = D.ui.topics[t.b];
   $app.innerHTML = '<div class="screen">' +
-    '<div class="game-top"><button class="icon-btn" type="button" data-quit aria-label="Выйти из игры">✕</button><div class="pebbles">' + pebbles + "</div>" + pillHtml() +
-    '<span class="chip num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + (G.starsBefore + G.stars) + "</span></div>" +
-    '<div class="q"><div class="qmeta"><span class="num">Задание ' + (G.idx + 1) + " из " + G.tasks.length + '</span><span class="topic">' + (topicImg ? '<img src="' + IMG(topicImg) + '" alt="">' : "") + esc(D.blocks[t.b]) + " · ур. " + lv + "</span></div>" +
-    picHtml(t, st.phase) +
-    (st.phase === "ask" ? '<div class="qtext">' + esc(t.q) + '</div><button class="speak" type="button" data-speak><i>🔊</i>Послушать ещё раз</button>' : "") +
-    "</div>" + answers + '<div id="say"></div></div>';
+    '<div class="game-top"><button class="icon-btn" type="button" data-quit aria-label="Выйти из игры" style="font-weight:900;font-size:18px">✕</button><div class="pebbles">' + pebbles + "</div>" + pillHtml() +
+    '<span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + (G.starsBefore + G.stars) + "</span></div>" +
+    '<div class="q"><span class="badge">' + (topicImg ? '<img src="' + IMG(topicImg) + '" alt="">' : "") + esc(D.blocks[t.b]) + " · ур. " + lv + "</span>" +
+    (t.m === "order" || t.m === "match" ? "" : picHtml(t, st.phase)) +
+    (st.phase === "ask" ? '<div class="qtext">' + esc(t.q) + '</div><button class="speak" type="button" data-speak><i><img src="' + IMG("03_ui/23_speaker") + '" alt=""></i>Послушать ещё раз</button>' : "") +
+    "</div>" + body + '<div id="say"></div></div>';
   speakBtn = document.querySelector("[data-speak]");
   if (st.phase === "remember") {
     if (!silent) play(D.say.remember);
     clearTimeout(G.memTimer);
     G.memTimer = setTimeout(function () { st.phase = "ask"; renderTask(true); play(D.say.hidden); setTimeout(function () { play(t.qa); }, 1300); }, (t.ss || 5) * 1000);
-  } else if (!silent) {
-    play(t.qa);
+  } else if (!silent) play(t.qa);
+}
+
+/* --- по порядку --- */
+function orderHtml(t, st) {
+  var slots = t.items.map(function (it, i) {
+    var f = i < st.placed;
+    return '<div class="slot' + (f ? " filled" : "") + '"><div class="box">' + (f ? img(it[1]) : i + 1) + "</div><small>" + (f ? esc(it[0]) : "") + "</small></div>";
+  }).join("");
+  var cards = st.shuffled.map(function (i) {
+    return ansButton(i, t.items[i][0], t.items[i][1], { attr: "ord", cls: i < st.placed ? "done" : "" });
+  }).join("");
+  var cls = t.items.length <= 4 ? "cols-2" : "cols-3";
+  return '<div class="card"><div class="slots">' + slots + '</div></div><div class="answers ' + cls + '">' + cards + "</div>";
+}
+function tapOrder(i, btn) {
+  var t = G.tasks[G.idx], st = G.cur;
+  if (st.done) return;
+  if (i === st.placed) {
+    st.placed++; haptic("success");
+    if (st.placed === t.items.length) { renderTask(true); finishInteractive(); return; }
+    renderTask(true);
+  } else {
+    st.mistakes++; haptic("error");
+    btn.classList.add("wrong"); setTimeout(function () { btn.classList.remove("wrong"); }, 450);
+    if (!st.hinted) { st.hinted = true; sayHtml("<b>Не этот!</b> " + (t.h ? "Подсказка: " + esc(t.h) : "Подумай, что идёт следующим."), "hint_point", false); play(t.ha || D.say.retry); }
   }
 }
+
+/* --- найди пару --- */
+function matchHtml(t, st) {
+  var left = t.pairs.map(function (p, i) {
+    return ansButton(i, p[0][0], p[0][1], { attr: "ml", cls: st.paired[i] ? "paired" : st.sel === i ? "picked" : "" });
+  }).join("");
+  var right = st.right.map(function (i) {
+    return ansButton(i, t.pairs[i][1][0], t.pairs[i][1][1], { attr: "mr", cls: st.paired[i] ? "paired" : "" });
+  }).join("");
+  return '<div class="match"><div class="col">' + left + '</div><div class="col">' + right + "</div></div>";
+}
+function tapMatchLeft(i) { var st = G.cur; if (st.done || st.paired[i]) return; st.sel = i; renderTask(true); }
+function tapMatchRight(i, btn) {
+  var t = G.tasks[G.idx], st = G.cur;
+  if (st.done || st.paired[i]) return;
+  if (st.sel === null) { toast("Сначала нажми на картинку слева 🙂"); return; }
+  if (st.sel === i) {
+    st.paired[i] = 1; st.sel = null; haptic("success");
+    if (Object.keys(st.paired).length === t.pairs.length) { renderTask(true); finishInteractive(); return; }
+    renderTask(true);
+  } else {
+    st.mistakes++; haptic("error");
+    btn.classList.add("wrong"); setTimeout(function () { btn.classList.remove("wrong"); }, 450);
+    if (!st.hinted) { st.hinted = true; sayHtml("<b>Не пара!</b> " + (t.h ? "Подсказка: " + esc(t.h) : "Попробуй другую картинку."), "hint_point", false); play(t.ha || D.say.retry); }
+  }
+}
+
+/* --- выбери все части --- */
+function partsHtml(t, st) {
+  var cls = t.items.length <= 4 ? "cols-2" : "cols-3";
+  var cards = t.items.map(function (it, i) {
+    var c = st.picked[i] ? "picked" : "";
+    if (st.done) c = it[2] ? "right" : st.picked[i] ? "wrong" : "";
+    return ansButton(i, it[0], it[1], { attr: "part", cls: c, mark: st.picked[i] || (st.done && it[2]) ? "✓" : "" });
+  }).join("");
+  return '<div class="answers ' + cls + '">' + cards + '</div><button class="btn b-leaf" type="button" data-partsdone' + (st.done ? " hidden" : "") + ">Готово</button>";
+}
+function tapPart(i) { var st = G.cur; if (st.done) return; if (st.picked[i]) delete st.picked[i]; else st.picked[i] = 1; renderTask(true); }
+function partsDone() {
+  var t = G.tasks[G.idx], st = G.cur;
+  var ok = t.items.every(function (it, i) { return !!it[2] === !!st.picked[i]; });
+  if (ok) { finishInteractive(); return; }
+  st.mistakes++; haptic("error");
+  if (st.attempt === 0) {
+    st.attempt = 1;
+    // лишние убираем, нужные оставляем
+    t.items.forEach(function (it, i) { if (!it[2]) delete st.picked[i]; });
+    renderTask(true);
+    sayHtml("<b>Почти!</b> " + (t.h ? "Подсказка: " + esc(t.h) : "Посмотри ещё раз."), "hint_point", false);
+    play(t.ha || D.say.retry);
+    return;
+  }
+  st.done = true;
+  renderTask(true);
+  finishTask(0, 0, "Ничего страшного! Зелёным отмечено всё, что нужно было выбрать.", "comforting", false);
+  play(D.say.fail);
+}
+function finishInteractive() {
+  var st = G.cur, m = st.mistakes;
+  var result = m === 0 ? 2 : m <= 2 ? 1 : 0, s = result === 2 ? 2 : result === 1 ? 1 : 1;
+  st.done = true;
+  if (G.tasks[G.idx].m === "parts") renderTask(true);
+  finishTask(result, s, "<b>" + (result === 2 ? pick(["Умница!", "Здорово!", "Молодец!"]) : "Получилось!") + "</b> +" + s + " ⭐", result === 2 ? "jump_joy" : "thumbs_up", true);
+  play(result === 2 ? D.say["ok" + (1 + Math.floor(Math.random() * 5))] : D.say.ok_second);
+}
+
 function sayHtml(text, pose, good) {
   document.getElementById("say").innerHTML = '<div class="say' + (good ? " good" : "") + '"><img src="' + M(pose) + '" alt=""><p>' + text + "</p></div>";
 }
@@ -566,8 +741,8 @@ function answer(i, btn) {
   var chosen = t.o[i];
   if (t.m === "parent_check") {
     var ok = chosen === t.a;
-    finishTask(ok ? 2 : 0, ok ? 2 : 1, ok ? "<b>Отлично!</b> +2 ⭐" : "Ничего, потренируйтесь вместе ещё. +1 ⭐", ok ? "clapping" : "comforting", ok);
     btn.classList.add(ok ? "right" : "wrong");
+    finishTask(ok ? 2 : 0, ok ? 2 : 1, ok ? "<b>Отлично!</b> +2 ⭐" : "Ничего, потренируйтесь вместе ещё. +1 ⭐", ok ? "clapping" : "comforting", ok);
     play(ok ? D.say.parent_ok : D.say.parent_soft);
     return;
   }
@@ -600,28 +775,28 @@ function finishTask(result, stars, text, pose, good) {
   core().stars += stars;
   recordAnswer(t, result);
   save("core"); save("seen"); save("stats");
-  Array.prototype.forEach.call(document.querySelectorAll("[data-ans]"), function (b) { b.disabled = true; });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-ans],[data-ord],[data-ml],[data-mr],[data-part]"), function (b) { b.disabled = true; });
   sayHtml(text, pose, good);
+  var say = document.getElementById("say"); if (say && say.scrollIntoView) say.scrollIntoView({ block: "nearest", behavior: "smooth" });
   setTimeout(function () {
-    if (view !== "game" || !G) return;
-    if (TIMER().locked) return;
+    if (view !== "game" || !G || TIMER().locked) return;
     G.idx++;
-    if (G.idx < G.tasks.length) renderTask(); else renderResult();
-  }, result === 0 ? 2600 : 1700);
+    if (G.idx < G.tasks.length) { renderTask(); var sc = document.querySelector(".screen"); if (sc) sc.scrollTop = 0; } else renderResult();
+  }, result === 0 ? 2800 : 1800);
 }
 function renderResult() {
   var c = core(), before = G.starsBefore, newIsl = island(before).idx !== island(c.stars).idx, nx = nextIsland(c.stars);
-  var canPlay = gamesToday() < D.perDay;
+  var canPlay = gamesToday() < perDay();
   view = "result";
   $app.innerHTML = '<div class="screen result">' +
     '<img class="big" src="' + (newIsl ? IMG(D.ui.islands[island(c.stars).idx]) : M(G.first >= G.tasks.length - 2 ? "trophy" : "party_hat")) + '" alt="">' +
     "<h2>" + (newIsl ? "Новый остров: «" + esc(stripEmoji(island(c.stars).name)) + "»!" : "Игра пройдена" + (c.name ? ", " + esc(c.name) : "") + "!") + "</h2>" +
     '<div class="plus-stars num">+' + G.stars + ' <img src="' + IMG("03_ui/14_star") + '" alt=""></div>' +
     '<div class="stats"><div class="card stat"><b class="num">' + G.first + " / " + G.tasks.length + '</b><span>с первой попытки</span></div><div class="card stat"><b class="num">🔥 ' + c.streak + "</b><span>" + (c.streak === 1 ? "день" : "дня подряд") + "</span></div></div>" +
-    (nx ? '<div class="card next" style="width:100%;text-align:left"><img src="' + IMG(D.ui.islands[nx.idx]) + '" alt=""><div><b>До острова «' + esc(stripEmoji(nx.name)) + '»</b><div class="bar"><i style="width:' + Math.round(100 * (c.stars - D.islands[nx.idx - 1][0]) / (nx.need - D.islands[nx.idx - 1][0])) + '%"></i></div><small class="num">ещё ' + (nx.need - c.stars) + " " + starWord(nx.need - c.stars) + "</small></div></div>" : "") +
-    '<div style="width:100%;display:grid;gap:10px;margin-top:auto">' +
-    (canPlay ? '<button class="btn-main" type="button" data-play>Ещё игра<small>осталось ' + (D.perDay - gamesToday()) + " на сегодня</small></button>" : '<p class="muted" style="font-size:15px">На сегодня всё — до завтра! 🦉</p>') +
-    '<button class="btn-ghost" type="button" data-go="home">На главную</button></div></div>';
+    (nx ? '<div class="card next" style="width:100%;text-align:left"><img class="tile-img" src="' + IMG(D.ui.islands[nx.idx]) + '" alt=""><div><b>До острова «' + esc(stripEmoji(nx.name)) + '»</b><div class="bar"><i style="width:' + Math.round(100 * (c.stars - D.islands[nx.idx - 1][0]) / (nx.need - D.islands[nx.idx - 1][0])) + '%"></i></div><small class="num">ещё ' + (nx.need - c.stars) + " " + starWord(nx.need - c.stars) + "</small></div></div>" : "") +
+    '<div style="width:100%;display:grid;gap:12px;margin-top:auto">' +
+    (canPlay ? '<button class="btn b-violet" type="button" data-play>Ещё игра<small>осталось ' + (perDay() - gamesToday()) + " на сегодня</small></button>" : '<p class="muted" style="font-size:16px">На сегодня всё — до завтра! 🦉</p>') +
+    '<button class="btn-white" type="button" data-go="home">На главную</button></div></div>';
   play(newIsl ? D.say.island : D.say.done);
   G = null;
 }
@@ -633,7 +808,7 @@ function renderParents() {
   for (var d = today - 6; d <= today; d++) {
     var rec = S.stats[String(d)], played = rec && Object.keys(rec).length > 0;
     if (played) days++;
-    var wd = new Date(d * DAY).getUTCDay(); // 0 — воскресенье
+    var wd = new Date(d * DAY).getUTCDay();
     cells += "<i" + (played ? ' class="on"' : "") + ">" + week[(wd + 6) % 7] + "</i>";
     if (rec) Object.keys(rec).forEach(function (b) { per[b] = per[b] || [0, 0]; per[b][0] += rec[b][0]; per[b][1] += rec[b][1]; total += rec[b][0]; first += rec[b][1]; });
   }
@@ -645,51 +820,64 @@ function renderParents() {
   var weak = Object.keys(per).filter(function (b) { return per[b][0] >= 2 && per[b][1] / per[b][0] < 0.6; }).slice(0, 2);
   var tips = weak.map(function (b) { return '<div class="tip wide"><b>🎯 Потренируйте: ' + esc(D.blocks[b]) + "</b>" + esc(D.tips[b][0].toUpperCase() + D.tips[b].slice(1)) + ".</div>"; }).join("");
   var left = timerLeft(), tlabel = TIMER().locked ? "время вышло" : left !== null ? "осталось " + fmt(left) : "выключен";
-  $app.innerHTML = '<div class="screen"><div><h2 style="font-size:22px">Для взрослых</h2><p class="muted">' + (c.name ? esc(c.name) + " · " : "") + "отчёт за последние 7 дней</p></div>" +
+  $app.innerHTML = '<div class="screen"><div><h1 style="font-size:28px">Для взрослых</h1><p class="muted">' + (c.name ? esc(c.name) + " · " : "") + "отчёт за последние 7 дней</p></div>" +
     '<div class="bento">' +
     '<div class="card"><div class="k">Дней с занятиями</div><div class="v num">' + days + ' / 7</div><div class="week">' + cells + "</div></div>" +
-    '<div class="card"><div class="k">С первой попытки</div><div class="ring" style="background:conic-gradient(var(--tangerine) 0 ' + pct + '%, var(--surface-2) ' + pct + '% 100%)"><b class="num">' + pct + "%</b></div><div class=\"k num\" style=\"margin-top:6px\">заданий: " + total + "</div></div>" +
+    '<div class="card"><div class="k">С первой попытки</div><div class="ring" style="background:conic-gradient(var(--violet) 0 ' + pct + '%, rgba(46,42,90,.08) ' + pct + '% 100%)"><b class="num">' + pct + "%</b></div><div class=\"k num\" style=\"margin-top:6px\">заданий: " + total + "</div></div>" +
     (rows ? '<div class="card wide"><div class="k" style="margin-bottom:4px">По темам</div>' + rows + "</div>" : '<div class="card wide muted">Пока нет ответов за неделю. Начните с одной короткой игры — 10 минут.</div>') +
     tips +
-    '<div class="card wide"><div class="setting"><span>⏱ Таймер занятия: ' + tlabel + '</span><button type="button" data-timer>Настроить</button></div>' +
-    '<div class="setting"><span>🔊 Озвучка вопросов</span><button type="button" data-voice>' + (c.voice ? "Выключить" : "Включить") + "</button></div>" +
-    '<div class="setting"><span>✏️ Имя: ' + (c.name ? esc(c.name) : "не указано") + '</span><button type="button" data-rename>Изменить</button></div>' +
-    '<div class="setting"><span>🎮 Игр в день</span><span class="chip num" style="padding:4px 11px">' + D.perDay + "</span></div>" +
-    '<div class="setting"><span>🗑 Начать заново</span><button type="button" data-reset>Сбросить</button></div></div>' +
+    '<div class="card wide">' +
+    '<div class="setting"><span>🎮 Игр в день</span><span class="stepper"><button type="button" data-perday="-1" aria-label="Меньше">−</button><b class="num">' + perDay() + '</b><button type="button" data-perday="1" aria-label="Больше">+</button></span></div>' +
+    '<div class="setting"><span>⏱ Таймер: ' + tlabel + '</span><button class="s" type="button" data-timer>Настроить</button></div>' +
+    '<div class="setting"><span>🔊 Озвучка</span><button class="s" type="button" data-voice>' + (c.voice ? "Выключить" : "Включить") + "</button></div>" +
+    '<div class="setting"><span>✏️ Имя: ' + (c.name ? esc(c.name) : "не указано") + '</span><button class="s" type="button" data-rename>Изменить</button></div>' +
+    '<div class="setting"><span>🗑 Начать заново</span><button class="s" type="button" data-reset>Сбросить</button></div></div>' +
     '<p class="muted wide">Сложность подстраивается сама по каждой теме. Хвалите за старание — это важнее правильных ответов 💛</p>' +
     "</div></div>" + tabbar();
 }
+function changePerDay(delta) {
+  var next = Math.max(1, Math.min(10, perDay() + delta));
+  if (next === perDay()) return;
+  adultLayer("Изменить количество игр в день может только взрослый:", function () { core().perDay = next; save("core"); render(); });
+}
 function resetAll() {
-  var l = layer('<h3>Сбросить весь прогресс?</h3><p>Звёзды, острова и статистика обнулятся. Отменить будет нельзя.</p><div class="gate" style="max-width:none;padding:0"></div><button class="btn-ghost" type="button" data-close>Отмена</button>');
-  gate(l.querySelector(".gate"), "Подтвердите как взрослый:", function () {
+  adultLayer("Сбросить звёзды, острова и статистику? Подтвердите:", function () {
     S.core = null; S.seen = []; S.stats = {}; KEYS.forEach(function (k) { if (k !== "timer") save(k); });
-    l.remove(); view = "home"; render();
+    view = "home"; render();
   });
 }
 
 /* ---------- события ---------- */
 $app.addEventListener("click", function (e) {
-  var el = e.target.closest("button"); if (!el) return;
-  if (el.dataset.go) { if (view === "game") return; view = el.dataset.go; render(); return; }
-  if ("play" in el.dataset) { startGame(); return; }
-  if ("timer" in el.dataset) { openTimer(); return; }
-  if ("speak" in el.dataset) { play(G && G.tasks[G.idx].qa); return; }
-  if (el.dataset.ans !== undefined) { answer(+el.dataset.ans, el); return; }
-  if ("quit" in el.dataset) {
-    var l = layer("<h3>Выйти из игры?</h3><p>Звёзды за решённые задания сохранятся.</p><button class=\"btn-main\" type=\"button\" data-yes style=\"font-size:18px\">Выйти</button><button class=\"btn-ghost\" type=\"button\" data-close>Играть дальше</button>");
+  var el = e.target.closest("button"); if (!el || el.disabled) return;
+  var ds = el.dataset;
+  if (ds.go) { if (view === "game") return; view = ds.go; render(); return; }
+  if ("play" in ds) { startGame(); return; }
+  if ("timer" in ds) { openTimer(); return; }
+  if ("speak" in ds) { play(G && G.tasks[G.idx].qa); return; }
+  if (G && TIMER().locked && (ds.ans || ds.ord || ds.ml || ds.mr || ds.part || "partsdone" in ds)) { showLock(); return; }
+  if (ds.ans !== undefined) { answer(+ds.ans, el); return; }
+  if (ds.ord !== undefined) { tapOrder(+ds.ord, el); return; }
+  if (ds.ml !== undefined) { tapMatchLeft(+ds.ml); return; }
+  if (ds.mr !== undefined) { tapMatchRight(+ds.mr, el); return; }
+  if (ds.part !== undefined) { tapPart(+ds.part); return; }
+  if ("partsdone" in ds) { partsDone(); return; }
+  if ("quit" in ds) {
+    var l = layer("<h3>Выйти из игры?</h3><p>Звёзды за решённые задания сохранятся.</p><button class=\"btn b-coral\" type=\"button\" data-yes style=\"font-size:20px\">Выйти</button><button class=\"btn-white\" type=\"button\" data-close>Играть дальше</button>");
     l.querySelector("[data-yes]").onclick = function () { clearTimeout(G && G.memTimer); G = null; view = "home"; l.remove(); render(); };
     return;
   }
-  if ("voice" in el.dataset) { core().voice = core().voice ? 0 : 1; save("core"); render(); return; }
-  if ("rename" in el.dataset) { core().asked = 0; render(); return; }
-  if ("reset" in el.dataset) { resetAll(); return; }
+  if (ds.perday) { changePerDay(+ds.perday); return; }
+  if ("voice" in ds) { core().voice = core().voice ? 0 : 1; save("core"); render(); return; }
+  if ("rename" in ds) { core().asked = 0; render(); return; }
+  if ("reset" in ds) { resetAll(); return; }
 });
 if (tg && tg.BackButton) tg.BackButton.onClick(function () { if (view !== "game") { view = "home"; render(); } });
 
 /* ---------- запуск ---------- */
 if (tg) {
   try { tg.ready(); tg.expand(); } catch (e) {}
-  try { tg.setHeaderColor("#FEF7E8"); tg.setBackgroundColor("#FEF7E8"); } catch (e) {}
+  try { tg.setHeaderColor("#EAF1FF"); tg.setBackgroundColor("#EAF1FF"); } catch (e) {}
   try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) {}
 }
 load(function () {
