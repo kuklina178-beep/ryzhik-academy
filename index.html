@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
   // Telegram Mini App bootstrap — added when porting "Академия Рыжика" from
@@ -13,8 +13,8 @@
     // in OS dark mode — see the CSS comment below. Match Telegram's chrome
     // to the app's own cream background instead of inheriting the client's
     // (possibly dark) theme colors.
-    try{ tg.setHeaderColor('#FFF2E8'); }catch(e){}
-    try{ tg.setBackgroundColor('#FFF2E8'); }catch(e){}
+    try{ tg.setHeaderColor('#F1F3FF'); }catch(e){}
+    try{ tg.setBackgroundColor('#F1F3FF'); }catch(e){}
     // A 5-year-old's thumb will absolutely trigger Telegram's swipe-to-close
     // gesture mid-game — disable it so an accidental swipe doesn't dump
     // progress out of the trainer.
@@ -424,6 +424,201 @@
   .cert-actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:22px;}
   .cert-mascot-row{display:flex; align-items:center; justify-content:center; gap:12px; margin:10px 0 18px;}
   @media print { .cert-actions, .topbar { display:none !important; } }
+</style>
+
+<style id="digital-theme">
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Unbounded:wght@500;600;700&display=swap');
+
+  /* ===================================================================
+     DIGITAL THEME — «современный диджитал» слой поверх исходных стилей.
+     Только внешний вид: ни одна функция/разметка приложения не менялась,
+     поэтому логика заданий, озвучка, демо-доступ работают как раньше.
+     Откат: backup/index.before-digital-redesign.html.
+     Принципы: аврора-градиент + едва заметная сетка точек, «стеклянные»
+     панели, объёмные градиентные кнопки со свечением, геометричный
+     шрифт (Unbounded для заголовков, Manrope для текста). Крупные зоны
+     нажатия и контраст для ребёнка 5 лет сохранены; правильный/неверный
+     ответ по-прежнему зелёный/красный (их стили не трогаем).
+     =================================================================== */
+  :root{
+    --bg-a:#EEF1FF; --bg-b:#F8F3FF;
+    --ink:#16143A; --ink-soft:#5F5D86;
+    --ind:#5B4DFF; --ind-deep:#3F32D6;
+    --vio:#8A4DFF;
+    --cyan:#16C8E6; --mint:#12C9A0;
+    --pink:#FF4FA3;
+    --glass:rgba(255,255,255,.74);
+    --glass-line:rgba(255,255,255,.95);
+    --shadow-rgb:36,30,110;
+    --font-display:'Unbounded','Manrope','Nunito',system-ui,sans-serif;
+    --font-body:'Manrope','Nunito',system-ui,sans-serif;
+  }
+  body{
+    background:
+      radial-gradient(60% 46% at 8% -4%, rgba(91,77,255,.30), transparent 62%),
+      radial-gradient(52% 42% at 104% 6%, rgba(22,200,230,.32), transparent 62%),
+      radial-gradient(60% 48% at 50% 112%, rgba(255,79,163,.20), transparent 64%),
+      linear-gradient(180deg,#F1F3FF,#F8F4FF);
+    background-attachment:fixed;
+    font-family:var(--font-body);
+    color:var(--ink);
+  }
+  /* едва заметная «цифровая» сетка точек, тает к низу экрана */
+  body::before{
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:radial-gradient(rgba(63,50,214,.13) 1px, transparent 1.3px);
+    background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.85),transparent 72%);
+            mask-image:linear-gradient(180deg,rgba(0,0,0,.85),transparent 72%);
+  }
+  #app{
+    position:relative; z-index:1;
+    padding-top:max(16px, env(safe-area-inset-top));
+    padding-bottom:max(44px, env(safe-area-inset-bottom));
+  }
+
+  /* ---------- типографика ---------- */
+  h1,h2,h3,.display{font-family:var(--font-display); letter-spacing:-.025em;}
+  .home-title{font-size:clamp(1.4rem,5.4vw,1.95rem); font-weight:700; line-height:1.15;}
+  .home-sub{font-weight:600; color:var(--ink-soft);}
+  .award-rank,.cert-title,.cert-name,.alpha-section-title{font-family:var(--font-display); letter-spacing:-.02em;}
+  .stars-pill,.session-timer-pill,.level-card .level-name,.dcard .dtitle,
+  .domain-tag,.alpha-letter,.alpha-word,.num-plain-cell,.eq-btn,.num-btn,
+  .session-min-btn,.badge-shelf-title,.award-rank-label,.cert-sign,.cert-body{font-family:var(--font-body);}
+  .tile,.letter-choice-btn,.sound-slot,.wb-slot,.word-caption{font-family:var(--font-body); font-weight:800;}
+  .big-btn,.name-input,.reward-toast{font-family:var(--font-display);}
+
+  /* ---------- верхняя панель: стекло ---------- */
+  .stars-pill,.session-timer-pill,.icon-btn{
+    background:var(--glass);
+    -webkit-backdrop-filter:blur(14px) saturate(1.5); backdrop-filter:blur(14px) saturate(1.5);
+    border:1px solid var(--glass-line);
+    box-shadow:0 12px 30px -14px rgba(var(--shadow-rgb),.5), inset 0 1px 0 rgba(255,255,255,.9);
+    color:var(--ink);
+  }
+  .stars-pill{font-weight:800;}
+  .session-timer-pill .stp-dot{background:var(--cyan); box-shadow:0 0 8px var(--cyan);}
+  .icon-btn.active-mode{
+    background:linear-gradient(145deg,var(--cyan),var(--mint)); border-color:transparent;
+    box-shadow:0 0 0 3px rgba(22,200,230,.35), 0 12px 24px -12px rgba(18,201,160,.7);
+  }
+
+  /* ---------- Рыжик и реплика ---------- */
+  .mascot-wrap::before{background:radial-gradient(ellipse at center, rgba(91,77,255,.38), rgba(22,200,230,.12) 55%, transparent 72%);}
+  .bubble{
+    background:var(--glass);
+    -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4);
+    border:1px solid var(--glass-line);
+    border-radius:22px 22px 22px 6px;
+    font-weight:700;
+    box-shadow:0 14px 32px -16px rgba(var(--shadow-rgb),.5), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .replay-badge{background:linear-gradient(145deg,var(--ind),var(--cyan)); box-shadow:0 4px 12px rgba(91,77,255,.5);}
+  .ryzhik-note{background:var(--glass); border:1px solid var(--glass-line);}
+
+  /* ---------- кнопки ---------- */
+  .big-btn{
+    font-weight:600; font-size:.95rem; letter-spacing:-.01em;
+    background:linear-gradient(135deg,var(--ind),var(--vio));
+    border:1px solid rgba(255,255,255,.4);
+    box-shadow:0 18px 36px -16px rgba(91,77,255,.8), inset 0 1px 0 rgba(255,255,255,.5);
+    padding:15px 28px;
+  }
+  .big-btn.solid-berry{background:linear-gradient(135deg,var(--pink),#FF7A59); box-shadow:0 18px 36px -16px rgba(255,79,163,.75), inset 0 1px 0 rgba(255,255,255,.5);}
+  .big-btn.solid-leaf{background:linear-gradient(135deg,var(--mint),var(--cyan)); box-shadow:0 18px 36px -16px rgba(18,201,160,.75), inset 0 1px 0 rgba(255,255,255,.5);}
+  .big-btn.ghost{
+    background:var(--glass); color:var(--ink); border:1px solid var(--glass-line);
+    box-shadow:0 12px 28px -16px rgba(var(--shadow-rgb),.45), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  /* на главном экране часть кнопок красится инлайн старыми цветами —
+     приводим к единой палитре: Алфавит (циан-индиго), Числа (янтарь),
+     Повторение (розовый), главная кнопка «Начать уровень» (индиго-фиолет). */
+  .big-btn[data-action="show-alphabet"]{background:linear-gradient(135deg,#16C8E6,#4B6BFF) !important; box-shadow:0 18px 36px -16px rgba(40,120,255,.75), inset 0 1px 0 rgba(255,255,255,.5) !important;}
+  .big-btn[data-action="show-numbers"]{background:linear-gradient(135deg,#FFB02E,#FF7A59) !important; box-shadow:0 18px 36px -16px rgba(255,122,89,.7), inset 0 1px 0 rgba(255,255,255,.5) !important;}
+  .big-btn[data-action="start-day"]{background:linear-gradient(135deg,#5B4DFF,#8A4DFF 60%,#B04DFF) !important; box-shadow:0 20px 40px -16px rgba(91,77,255,.85), 0 0 0 4px rgba(91,77,255,.12), inset 0 1px 0 rgba(255,255,255,.5) !important; font-size:1.02rem;}
+  .fab{background:linear-gradient(135deg,var(--ind),var(--cyan)); border:1px solid rgba(255,255,255,.4); box-shadow:0 18px 34px -14px rgba(91,77,255,.75), inset 0 1px 0 rgba(255,255,255,.5);}
+  .skip-fab{background:var(--glass); border:1px solid var(--glass-line);}
+
+  /* ---------- карточки разделов ---------- */
+  .dcard{border:1px solid rgba(255,255,255,.35); border-radius:30px; box-shadow:inset 0 1px 0 rgba(255,255,255,.45);}
+  .dcard .dtitle{font-family:var(--font-display); font-weight:600; letter-spacing:-.02em;}
+  .dcard[data-topic="letters"]{background:linear-gradient(150deg,#6C5CFF,#8A4DFF 60%,#B04DFF) !important; box-shadow:0 22px 40px -18px rgba(91,77,255,.8), inset 0 1px 0 rgba(255,255,255,.45) !important;}
+  .dcard[data-topic="numbers"]{background:linear-gradient(150deg,#FFB02E,#FF7A59) !important; box-shadow:0 22px 40px -18px rgba(255,122,89,.75), inset 0 1px 0 rgba(255,255,255,.45) !important;}
+  .dcard.c-read{background:linear-gradient(150deg,#6C5CFF,#8A4DFF 60%,#B04DFF); box-shadow:0 22px 40px -18px rgba(91,77,255,.8), inset 0 1px 0 rgba(255,255,255,.45);}
+  .dcard.c-math{background:linear-gradient(150deg,#FFB02E,#FF7A59); box-shadow:0 22px 40px -18px rgba(255,122,89,.75), inset 0 1px 0 rgba(255,255,255,.45);}
+  .dcard.c-write{background:linear-gradient(150deg,#12C9A0,#16C8E6); box-shadow:0 22px 40px -18px rgba(18,201,160,.75), inset 0 1px 0 rgba(255,255,255,.45);}
+
+  /* ---------- карта уровней ---------- */
+  .level-card{
+    background:rgba(255,255,255,.72); border:1px solid var(--glass-line); border-radius:20px;
+    box-shadow:0 12px 24px -16px rgba(var(--shadow-rgb),.4), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .level-card .level-name{font-weight:800; font-size:.7rem;}
+  .level-card.level-current{
+    background:linear-gradient(145deg,var(--ind),var(--vio));
+    box-shadow:0 0 0 3px rgba(22,200,230,.6), 0 20px 32px -14px rgba(91,77,255,.8), inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  .level-card.level-done{background:linear-gradient(145deg,var(--mint),var(--cyan)); box-shadow:0 14px 26px -14px rgba(18,201,160,.7), inset 0 1px 0 rgba(255,255,255,.4);}
+  .level-card.level-locked{opacity:.62;}
+  .day-dot.current{background:linear-gradient(145deg,var(--ind),var(--vio)); box-shadow:0 0 0 3px rgba(22,200,230,.6);}
+  .day-dot.done{background:linear-gradient(145deg,var(--mint),var(--cyan));}
+  .day-map,.dash-card{background:var(--glass); border:1px solid var(--glass-line);}
+  .badge-chip.unlocked{background:var(--glass); border:1px solid var(--glass-line);}
+  .dash-level-fill{background:linear-gradient(90deg,var(--cyan),var(--vio));}
+  .reward-toast{background:linear-gradient(135deg,var(--ind),var(--pink)); font-weight:600; font-size:.92rem; box-shadow:0 18px 36px -14px rgba(91,77,255,.7);}
+
+  /* ---------- игровой экран ---------- */
+  .pdot{background:rgba(var(--shadow-rgb),.14);}
+  .pdot.done{background:linear-gradient(135deg,var(--pink),var(--vio));}
+  .pdot.now{background:var(--ind); box-shadow:0 0 0 4px rgba(91,77,255,.22);}
+  .stage-card{
+    background:rgba(255,255,255,.8);
+    -webkit-backdrop-filter:blur(18px) saturate(1.4); backdrop-filter:blur(18px) saturate(1.4);
+    border:1px solid var(--glass-line); border-radius:32px;
+    box-shadow:0 34px 64px -30px rgba(var(--shadow-rgb),.55), 0 0 0 1px rgba(91,77,255,.06), inset 0 1px 0 rgba(255,255,255,.95);
+  }
+  .domain-tag{letter-spacing:.07em; font-weight:800;}
+  .tag-read{background:linear-gradient(135deg,var(--ind),var(--vio));}
+  .tag-math{background:linear-gradient(135deg,#FFA62B,#FF7A59);}
+  .tag-write{background:linear-gradient(135deg,var(--mint),var(--cyan));}
+  .tile{
+    background:linear-gradient(160deg,#fff,#F0EDFF); border:1px solid rgba(91,77,255,.14);
+    box-shadow:0 14px 26px -16px rgba(var(--shadow-rgb),.45), inset 0 1px 0 #fff;
+  }
+  .choice-btn,.num-btn,.compare-group{
+    background:linear-gradient(160deg,#fff,#F0EDFF); border:1px solid rgba(91,77,255,.12);
+    box-shadow:0 14px 24px -16px rgba(var(--shadow-rgb),.42), inset 0 1px 0 #fff;
+  }
+  .eq-btn{border:1px solid rgba(91,77,255,.14);}
+  .wb-slot{border-color:rgba(91,77,255,.35); background:rgba(255,255,255,.7);}
+  .wb-slot.filled{background:linear-gradient(145deg,var(--ind),var(--vio)); border:none;}
+  .sound-slot{border-color:rgba(91,77,255,.35);}
+  .canvas-wrap{background:var(--glass); border:1px solid var(--glass-line); box-shadow:0 22px 40px -22px rgba(var(--shadow-rgb),.5);}
+  .alpha-cell,.num-plain-cell{border:1px solid rgba(91,77,255,.1); box-shadow:0 10px 18px -14px rgba(var(--shadow-rgb),.4);}
+  .alpha-section-vowels{color:var(--pink);}
+  .alpha-section-consonants{color:var(--ind);}
+
+  /* ---------- ввод имени, настройки, окна ---------- */
+  .name-input{
+    font-weight:600; font-size:1.15rem; border:2px solid rgba(91,77,255,.5);
+    background:rgba(255,255,255,.88); box-shadow:0 14px 30px -16px rgba(91,77,255,.5);
+  }
+  .name-input:focus{border-color:var(--ind); outline:3px solid rgba(22,200,230,.45); outline-offset:2px;}
+  .voice-row{background:var(--glass); border:1px solid var(--glass-line);}
+  .voice-row.active{box-shadow:0 0 0 3px var(--ind), 0 10px 20px -14px rgba(var(--shadow-rgb),.3);}
+  .voice-play{background:linear-gradient(145deg,var(--ind),var(--cyan));}
+  .session-min-btn.active{background:linear-gradient(145deg,var(--ind),var(--cyan));}
+  .info-modal-overlay{background:rgba(22,20,58,.55); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
+  .info-modal-card{border-radius:30px; border:1px solid var(--glass-line);}
+  .info-modal-card h3{font-family:var(--font-display); letter-spacing:-.02em;}
+
+  /* ---------- переменка ---------- */
+  .break-screen{background:radial-gradient(70% 50% at 20% 0%, rgba(138,77,255,.7), transparent 65%), linear-gradient(160deg,#4B3FFF,#16C8E6);}
+
+  @media (max-width:420px){
+    .home-title{font-size:clamp(1.25rem,6vw,1.6rem);}
+    .big-btn{padding:14px 22px; font-size:.9rem;}
+  }
 </style>
 
 <div id="app"></div>
