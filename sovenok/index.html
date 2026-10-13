@@ -103,18 +103,26 @@ img { display: block; max-width: 100%; }
 .tab img { width: 32px; height: 32px; border-radius: 10px; }
 .tab.on { color: #fff; background: linear-gradient(155deg, var(--violet), var(--violet-deep)); box-shadow: 0 10px 20px -12px rgba(106,75,232,.8); }
 
-/* карта */
-.map { display: flex; flex-direction: column; gap: 12px; padding-bottom: 8px; }
-.isle { display: grid; grid-template-columns: 104px 1fr; align-items: center; gap: 14px; background: var(--card); border-radius: 26px; padding: 10px 16px 10px 10px; box-shadow: var(--sh-s); }
-.isle img.i { width: 104px; height: 104px; }
-.isle b { font-family: var(--display); font-size: 20px; display: block; line-height: 1.1; }
-.isle small { font-weight: 800; color: var(--ink-soft); font-size: 14px; }
-.isle.closed { opacity: .6; }
-.isle.closed img.i { filter: grayscale(1); }
-.isle.now { box-shadow: 0 0 0 3px var(--violet), var(--sh-m); }
-.isle .tag { display: inline-block; margin-top: 4px; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 900; color: #fff; background: var(--leaf); }
-.isle.now .tag { background: var(--violet); }
-
+/* карта: тропинка снизу вверх, острова слева и справа */
+.mapbox { flex: none; position: relative; border-radius: 30px; overflow: hidden; box-shadow: var(--sh-m);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255,255,255,.75) 0 46px, transparent 47px),
+    radial-gradient(circle at 26% 10%, rgba(255,255,255,.75) 0 34px, transparent 35px),
+    radial-gradient(circle at 82% 38%, rgba(255,255,255,.7) 0 40px, transparent 41px),
+    radial-gradient(circle at 74% 40%, rgba(255,255,255,.7) 0 28px, transparent 29px),
+    radial-gradient(circle at 15% 70%, rgba(255,255,255,.65) 0 36px, transparent 37px),
+    linear-gradient(180deg, #CFE6FF 0%, #E3F1FF 45%, #D9F5EA 100%); }
+.mapbox svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.isle { position: absolute; width: 150px; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 4px; text-align: center; }
+.isle img.i { width: 118px; height: 118px; border-radius: 50%; box-shadow: 0 12px 22px -12px rgba(var(--shadow-rgb), .5); }
+.isle b { font-family: var(--display); font-size: 16px; line-height: 1.05; background: var(--card); border-radius: 999px; padding: 4px 12px; box-shadow: var(--sh-s); }
+.isle small { font-weight: 900; font-size: 12px; color: var(--ink-soft); }
+.isle.closed img.i { filter: grayscale(1); opacity: .55; }
+.isle.closed b { color: var(--ink-soft); }
+.isle.now img.i { width: 134px; height: 134px; box-shadow: 0 0 0 5px var(--sun), 0 0 0 11px rgba(255,182,72,.35), var(--sh-m); }
+.isle.done img.i { box-shadow: 0 0 0 4px var(--leaf), var(--sh-s); }
+.isle .owlmark { position: absolute; width: 70px; height: 70px; right: -6px; top: -26px; border-radius: 50%; box-shadow: var(--sh-s); animation: bob 2.4s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-6px); } }
 /* игра */
 .game-top { display: flex; gap: 8px; align-items: center; } .game-top .pebbles { flex: 1; }
 .pebbles { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 5px; }
@@ -344,6 +352,13 @@ function play(file) {
     if (speakBtn) { speakBtn.classList.remove("on"); void speakBtn.offsetWidth; speakBtn.classList.add("on"); }
   } catch (e) {}
 }
+// Имя ребёнка звучит перед фразой: «Маша! Полетели!» (если имя есть в списке озвученных).
+function nameClip() { var n = core().name; return n && D.names ? D.names[n.toLowerCase().replace("ё", "е")] || D.names[n.toLowerCase()] : null; }
+function playNamed(file) {
+  var nc = nameClip();
+  if (!nc || !file || !core().voice) { play(file); return; }
+  if (lead) { queue = [nc, file]; start(lead); lead = null; } else { queue = [file]; start(nc); }
+}
 function haptic(kind) { try { tg.HapticFeedback.notificationOccurred(kind); } catch (e) {} }
 
 /* ---------- утилиты ---------- */
@@ -543,7 +558,7 @@ function renderName() {
     '<h1>Как тебя зовут?</h1><p class="muted" style="font-size:16px">Я совёнок Тим! Вместе долетим до самой школы — остров за островом.</p>' +
     '<input id="name" maxlength="20" placeholder="Имя">' +
     '<button class="btn b-coral" type="button" id="go">Полетели!</button><button class="btn-white" type="button" id="skip">Пропустить</button></div>';
-  function done(name) { var c = core(); c.name = name || null; c.asked = 1; save("core"); play(D.say.hello); view = "home"; render(); }
+  function done(name) { var c = core(); c.name = name || null; c.asked = 1; save("core"); playNamed(D.say.hello); view = "home"; render(); }
   document.getElementById("go").onclick = function () { done(document.getElementById("name").value.trim().replace(/[^A-Za-zА-Яа-яЁё\- ]/g, "").slice(0, 20)); };
   document.getElementById("skip").onclick = function () { done(null); };
 }
@@ -570,17 +585,30 @@ function renderHome() {
 }
 
 function renderMap() {
-  var c = core(), cur = island(c.stars).idx;
+  var c = core(), cur = island(c.stars).idx, N = D.islands.length, STEP = 175, H = N * STEP + 70;
+  // остров 0 — внизу, тропинка поднимается змейкой
+  function pos(i) { return { x: i % 2 ? 72 : 28, y: H - 110 - i * STEP }; }
   var items = D.islands.map(function (x, i) {
-    var st = i < cur ? "done" : i === cur ? "now" : "closed";
-    return '<div class="isle ' + st + '">' + img(D.ui.islands[i], "i") +
-      "<div><b>" + esc(stripEmoji(x[1])) + "</b><small>" + (st === "closed" ? "нужно " + x[0] + " ⭐" : x[0] + " ⭐") + "</small>" +
-      (st === "done" ? '<br><span class="tag">✓ пройден</span>' : st === "now" ? '<br><span class="tag">ты здесь</span>' : "") + "</div></div>";
+    var st = i < cur ? "done" : i === cur ? "now" : "closed", p = pos(i);
+    return '<div class="isle ' + st + '" style="left:' + p.x + '%;top:' + p.y + 'px">' + img(D.ui.islands[i], "i") +
+      (st === "now" ? '<img class="owlmark" src="' + M("flying") + '" alt="">' : "") +
+      "<b>" + esc(stripEmoji(x[1])) + "</b><small>" + (st === "done" ? "✓ пройден" : st === "now" ? "ты здесь" : "нужно " + x[0] + " ⭐") + "</small></div>";
   }).join("");
-  $app.innerHTML = '<div class="screen"><div class="top"><h1 style="font-size:28px">Карта островов</h1><span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + c.stars + '</span></div><div class="map">' + items + "</div></div>" + tabbar();
+  $app.innerHTML = '<div class="screen"><div class="top"><h1 style="font-size:28px">Карта островов</h1><span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + c.stars + '</span></div>' +
+    '<div class="mapbox" style="height:' + H + 'px"><svg aria-hidden="true"></svg>' + items + "</div></div>" + tabbar();
+  var box = document.querySelector(".mapbox"), W = box.clientWidth, svg = box.querySelector("svg");
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  function seg(a, b) { // плавная S-кривая между островами
+    var x1 = a.x * W / 100, x2 = b.x * W / 100, ym = (a.y + b.y) / 2;
+    return " C " + x1 + " " + ym + ", " + x2 + " " + ym + ", " + x2 + " " + b.y;
+  }
+  var all = "M " + pos(0).x * W / 100 + " " + pos(0).y, done = all;
+  for (var i = 1; i < N; i++) { var s = seg(pos(i - 1), pos(i)); all += s; if (i <= cur) done += s; }
+  svg.innerHTML = '<path d="' + all + '" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="16" stroke-linecap="round"/>' +
+    '<path d="' + all + '" fill="none" stroke="rgba(46,42,90,.18)" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 16"/>' +
+    (cur > 0 ? '<path d="' + done + '" fill="none" stroke="#8E6CFF" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 14"/>' : "");
   var now = document.querySelector(".isle.now"); if (now) now.scrollIntoView({ block: "center" });
 }
-
 /* ---------- игра ---------- */
 function startGame() {
   if (TIMER().locked) { showLock(); return; }
@@ -592,7 +620,7 @@ function startGame() {
   save("core");
   G = { tasks: buildSession(), idx: 0, marks: [], stars: 0, first: 0, starsBefore: c.stars };
   view = "game";
-  play(D.say.start);
+  playNamed(D.say.start);
   renderTask(true);
   setTimeout(function () { if (G && G.idx === 0) play(G.tasks[0].qa); }, 2200);
 }
@@ -774,7 +802,8 @@ function answer(i, btn) {
     var first = st.attempt === 0, s = first ? 2 : 1;
     btn.classList.add("right"); haptic("success");
     finishTask(first ? 2 : 1, s, "<b>" + (first ? pick(["Умница!", "Верно!", "Здорово!", "Молодец!", "Так держать!"]) : "Получилось!") + "</b> +" + s + " ⭐", first ? "jump_joy" : "thumbs_up", true);
-    play(first ? D.say["ok" + (1 + Math.floor(Math.random() * 5))] : D.say.ok_second);
+    var praise = first ? D.say["ok" + (1 + Math.floor(Math.random() * 5))] : D.say.ok_second;
+    if (Math.random() < 0.35) playNamed(praise); else play(praise);
     return;
   }
   haptic("error");
@@ -820,7 +849,7 @@ function renderResult() {
     '<div style="width:100%;display:grid;gap:12px;margin-top:auto">' +
     (canPlay ? '<button class="btn b-violet" type="button" data-play>Ещё игра<small>осталось ' + (perDay() - gamesToday()) + " на сегодня</small></button>" : '<p class="muted" style="font-size:16px">На сегодня всё — до завтра! 🦉</p>') +
     '<button class="btn-white" type="button" data-go="home">На главную</button></div></div>';
-  play(newIsl ? D.say.island : D.say.done);
+  playNamed(newIsl ? D.say.island : D.say.done);
   G = null;
 }
 
