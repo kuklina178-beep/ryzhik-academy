@@ -691,7 +691,7 @@ function renderTask(silent) {
 function orderHtml(t, st) {
   var slots = t.items.map(function (it, i) {
     var f = i < st.placed;
-    return '<div class="slot' + (f ? " filled" : "") + '"><div class="box">' + (f ? img(it[1]) : i + 1) + "</div><small>" + (f ? esc(it[0]) : "") + "</small></div>";
+    return '<div class="slot' + (f ? " filled" : "") + '"><div class="box">' + (f ? img(it[1]) : "") + "</div><small>" + (f ? esc(it[0]) : "") + "</small></div>";
   }).join("");
   var cards = st.shuffled.map(function (i) {
     return ansButton(i, t.items[i][0], t.items[i][1], { attr: "ord", cls: i < st.placed ? "done" : "" });
