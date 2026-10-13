@@ -240,6 +240,7 @@ img { display: block; max-width: 100%; }
 .medal img { width: 72px; height: 72px; border-radius: 50%; }
 .medal b { font-size: 13px; line-height: 1.15; }
 .medal small { font-size: 11px; color: var(--ink-soft); font-weight: 700; line-height: 1.2; }
+.medal { cursor: pointer; }
 .medal.locked img { filter: grayscale(1); opacity: .35; }
 .medal.locked b { color: var(--ink-soft); }
 .medal.fresh { box-shadow: 0 0 0 3px var(--sun), var(--sh-m); }
@@ -645,7 +646,7 @@ function checkMedals() {
   return fresh;
 }
 function medalHtml(m, locked, fresh) {
-  return '<div class="medal' + (locked ? " locked" : "") + (fresh ? " fresh" : "") + '"><img src="' + IMG(m[1]) + '" alt=""><b>' + esc(m[2]) + "</b><small>" + esc(m[3]) + "</small></div>";
+  return '<div class="medal' + (locked ? " locked" : "") + (fresh ? " fresh" : "") + '" data-medal="' + m[0] + '"><img src="' + IMG(m[1]) + '" alt=""><b>' + esc(m[2]) + "</b><small>" + esc(m[3]) + "</small></div>";
 }
 function confetti() {
   var colors = ["#FF7A66", "#FFB648", "#34C2A3", "#5AA9F0", "#8E6CFF", "#FF6FA8"], h = '<div class="confetti">';
@@ -1027,6 +1028,8 @@ function renderResult() {
   } else {
     playNamed(fresh.length ? D.say.medal : D.say.done);
   }
+  // каждая новая медаль — голосом: «Медаль „Огонёк“ — за то, что ты играешь три дня подряд!»
+  fresh.forEach(function (m) { playAfter(m[5]); });
 }
 
 /* ---------- награды ---------- */
@@ -1040,7 +1043,7 @@ function renderAwards() {
   }).join("");
   $app.innerHTML = '<div class="screen"><div class="top"><h1 style="font-size:28px">Мои награды</h1><span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + c.stars + "</span></div>" +
     '<div class="card" style="text-align:center;display:grid;gap:8px;justify-items:center"><img class="tile-img" src="' + IMG(D.ui.islands[ri]) + '" alt="" style="width:110px;height:110px;border-radius:50%">' +
-    '<div class="k">Моё звание</div><span class="rank" style="font-size:17px">' + esc(rankName(ri)) + "</span>" +
+    '<div class="k">Моё звание</div><span class="rank" data-ranknow style="font-size:17px;cursor:pointer">' + esc(rankName(ri)) + "</span>" +
     (nx ? '<small class="muted">Следующее — «' + esc(rankName(nx.idx)) + "» через " + (nx.need - c.stars) + " " + starWord(nx.need - c.stars) + "</small>" : '<small class="muted">Все звания получены! 🎓</small>') + "</div>" +
     (c.graduated ? '<button class="btn b-violet" type="button" data-go="graduation">🎓 Мой диплом</button>' : "") +
     '<h2 style="font-size:22px">Медали · ' + earned + " из " + D.medals.length + "</h2>" +
@@ -1112,6 +1115,13 @@ function resetAll() {
 
 /* ---------- события ---------- */
 $app.addEventListener("click", function (e) {
+  var md = e.target.closest("[data-medal]");
+  if (md) {
+    var mm = D.medals.filter(function (m) { return m[0] === md.dataset.medal; })[0];
+    if (mm) play(medalsGot()[mm[0]] ? mm[5] : mm[6]);
+    return;
+  }
+  if (e.target.closest("[data-ranknow]")) { playNamed(D.rankNow[rankIdx()]); return; }
   var el = e.target.closest("button"); if (!el || el.disabled) return;
   var ds = el.dataset;
   if (ds.go) { if (view === "game") return; view = ds.go; render(); return; }
