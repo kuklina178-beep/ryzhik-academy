@@ -134,7 +134,9 @@ img { display: block; max-width: 100%; }
 .pic .plus { font-family: var(--display); font-size: 34px; color: var(--violet); }
 .pic .remember { width: 100%; text-align: center; font-family: var(--display); font-size: 22px; font-weight: 800; }
 .pic .emojirow { font-size: 40px; letter-spacing: 6px; }
-.qtext { font-family: var(--display); font-weight: 800; font-size: 22px; line-height: 1.15; text-align: center; }
+.qtext { font-family: var(--display); font-weight: 800; font-size: 22px; line-height: 1.15; text-align: center; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
+.q > *, .screen > * { min-width: 0; max-width: 100%; }
+.screen { overflow-x: hidden; }
 .speak { justify-self: center; display: inline-flex; align-items: center; gap: 8px; background: var(--card); border-radius: 99px; padding: 6px 16px 6px 6px; font-weight: 900; font-size: 15px; box-shadow: var(--sh-s); }
 .speak i { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; } .speak i img { width: 34px; height: 34px; }
 .speak.on i { animation: pulse 1s ease-in-out 2; }
@@ -153,6 +155,8 @@ img { display: block; max-width: 100%; }
 .ans.wrong { box-shadow: 0 0 0 4px var(--pink), var(--sh-s); background: var(--bad-soft); opacity: .55; animation: shake .35s; }
 .ans.reveal { box-shadow: 0 0 0 4px var(--leaf), var(--sh-m); }
 .ans.picked { box-shadow: 0 0 0 4px var(--violet), var(--sh-m); }
+.ans .nbadge { position: absolute; top: 6px; left: 6px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-family: var(--display); font-weight: 800; font-size: 20px; background: linear-gradient(155deg, var(--sun), var(--sun-deep)); box-shadow: var(--sh-s); z-index: 1; }
+.ans.row .nbadge { top: 50%; transform: translateY(-50%); left: auto; right: 12px; }
 .ans .mark { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 900; font-size: 15px; background: rgba(var(--shadow-rgb), .15); }
 .ans.picked .mark { background: var(--violet); }
 .ans.right .mark { background: var(--leaf); }
@@ -179,6 +183,9 @@ img { display: block; max-width: 100%; }
 .say img { width: 62px; height: 62px; border-radius: 50%; box-shadow: var(--sh-s); }
 .say p { background: var(--card); border-radius: 20px 20px 20px 4px; padding: 11px 14px; font-weight: 800; font-size: 15px; line-height: 1.3; box-shadow: var(--sh-s); }
 .say p b { color: var(--violet-deep); }
+.hint-btns { display: flex; gap: 8px; margin-top: 10px; }
+.hint-btns button { flex: 1; border-radius: 999px; padding: 10px 12px; font-weight: 900; font-size: 16px; background: rgba(var(--shadow-rgb), .07); }
+.hint-btns button[data-hint="yes"] { background: linear-gradient(155deg, var(--sun), var(--sun-deep)); color: #fff; }
 .say.good p { background: linear-gradient(155deg, var(--leaf), var(--leaf-deep)); color: #fff; }
 .say.good p b { color: #fff; }
 
@@ -318,12 +325,22 @@ document.addEventListener("pointerdown", function () {
   unlocked = true;
   var p = player.play(); if (p && p.catch) p.catch(function () {});
 }, true);
-var speakBtn = null;
+var speakBtn = null, queue = [], lead = null;
+player.addEventListener("ended", function () { if (queue.length) start(queue.shift()); });
+function start(file) {
+  try { player.pause(); player.src = "a/" + file; var p = player.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+}
+// Нажатие на кнопку: сначала звучит её название, потом отклик (похвала, подсказка).
+function withLead(file, fn) {
+  lead = core().voice ? file : null;
+  fn();
+  if (lead) { queue = []; start(lead); lead = null; }
+}
 function play(file) {
   if (!file || !core().voice) return;
   try {
-    player.pause(); player.src = "a/" + file;
-    var p = player.play(); if (p && p.catch) p.catch(function () {});
+    if (lead) { queue = [file]; start(lead); lead = null; }
+    else { queue = []; start(file); }
     if (speakBtn) { speakBtn.classList.remove("on"); void speakBtn.offsetWidth; speakBtn.classList.add("on"); }
   } catch (e) {}
 }
@@ -603,7 +620,7 @@ function answersClass(labels) {
 function ansButton(i, label, key, extra) {
   var row = extra && extra.row;
   return '<button class="ans' + (row ? " row" : "") + (extra && extra.cls ? " " + extra.cls : "") + '" type="button" data-' + (extra && extra.attr || "ans") + '="' + i + '"' + (extra && extra.disabled ? " disabled" : "") + ">" +
-    (key ? img(key) : "") + "<span>" + esc(label) + "</span>" + (extra && extra.mark ? '<span class="mark">' + extra.mark + "</span>" : "") + "</button>";
+    (extra && extra.num ? '<span class="nbadge">' + extra.num + "</span>" : "") + (key ? img(key) : "") + "<span>" + esc(label) + "</span>" + (extra && extra.mark ? '<span class="mark">' + extra.mark + "</span>" : "") + "</button>";
 }
 function renderTask(silent) {
   if (!G) { view = "home"; render(); return; }
@@ -623,7 +640,7 @@ function renderTask(silent) {
   else if (st.phase === "ask") {
     var lbls = t.o, cls = t.nolabel ? (t.o.length === 3 ? "cols-3" : "cols-2") : answersClass(lbls), rowMode = cls === "";
     body = '<div class="answers ' + cls + '">' + t.o.map(function (o, i) {
-      return ansButton(i, t.nolabel ? "" : o, t.oi && t.oi[i], { row: rowMode, cls: st.removed[i] ? "wrong" : "", disabled: st.removed[i] });
+      return ansButton(i, t.nolabel ? "" : o, t.oi && t.oi[i], { row: rowMode, cls: st.removed[i] ? "wrong" : "", disabled: st.removed[i], num: t.n ? i + 1 : 0 });
     }).join("") + "</div>";
   }
   var topicImg = D.ui.topics[t.b];
@@ -664,7 +681,7 @@ function tapOrder(i, btn) {
   } else {
     st.mistakes++; haptic("error");
     btn.classList.add("wrong"); setTimeout(function () { btn.classList.remove("wrong"); }, 450);
-    if (!st.hinted) { st.hinted = true; sayHtml("<b>Не этот!</b> " + (t.h ? "Подсказка: " + esc(t.h) : "Подумай, что идёт следующим."), "hint_point", false); play(t.ha || D.say.retry); }
+    if (!st.hinted) { st.hinted = true; askHint(t, "Не этот!"); }
   }
 }
 
@@ -690,7 +707,7 @@ function tapMatchRight(i, btn) {
   } else {
     st.mistakes++; haptic("error");
     btn.classList.add("wrong"); setTimeout(function () { btn.classList.remove("wrong"); }, 450);
-    if (!st.hinted) { st.hinted = true; sayHtml("<b>Не пара!</b> " + (t.h ? "Подсказка: " + esc(t.h) : "Попробуй другую картинку."), "hint_point", false); play(t.ha || D.say.retry); }
+    if (!st.hinted) { st.hinted = true; askHint(t, "Не пара!"); }
   }
 }
 
@@ -715,8 +732,7 @@ function partsDone() {
     // лишние убираем, нужные оставляем
     t.items.forEach(function (it, i) { if (!it[2]) delete st.picked[i]; });
     renderTask(true);
-    sayHtml("<b>Почти!</b> " + (t.h ? "Подсказка: " + esc(t.h) : "Посмотри ещё раз."), "hint_point", false);
-    play(t.ha || D.say.retry);
+    askHint(t, "Почти!");
     return;
   }
   st.done = true;
@@ -733,6 +749,13 @@ function finishInteractive() {
   play(result === 2 ? D.say["ok" + (1 + Math.floor(Math.random() * 5))] : D.say.ok_second);
 }
 
+// После ошибки подсказка — только если ребёнок сам захочет.
+function askHint(t, head) {
+  if (!t.h) { sayHtml("<b>" + head + "</b> Попробуй ещё раз!", "hint_point", false); play(D.say.retry); return; }
+  sayHtml("<b>" + head + "</b> Нужна подсказка?" +
+    '<span class="hint-btns"><button type="button" data-hint="yes">💡 Да</button><button type="button" data-hint="no">Нет, я сам!</button></span>', "thinking", false);
+  play(D.say.hint_ask);
+}
 function sayHtml(text, pose, good) {
   document.getElementById("say").innerHTML = '<div class="say' + (good ? " good" : "") + '"><img src="' + M(pose) + '" alt=""><p>' + text + "</p></div>";
 }
@@ -759,8 +782,7 @@ function answer(i, btn) {
   if (st.attempt === 0 && visible > 2) {
     st.attempt = 1; st.removed[i] = 1;
     btn.classList.add("wrong"); btn.disabled = true;
-    sayHtml("<b>Почти!</b> " + (t.h ? "Подсказка: " + esc(t.h) : "Попробуй ещё раз!"), "hint_point", false);
-    play(t.ha || D.say.retry);
+    askHint(t, "Почти!");
     return;
   }
   btn.classList.add("wrong");
@@ -857,12 +879,15 @@ $app.addEventListener("click", function (e) {
   if ("timer" in ds) { openTimer(); return; }
   if ("speak" in ds) { play(G && G.tasks[G.idx].qa); return; }
   if (G && TIMER().locked && (ds.ans || ds.ord || ds.ml || ds.mr || ds.part || "partsdone" in ds)) { showLock(); return; }
-  if (ds.ans !== undefined) { answer(+ds.ans, el); return; }
-  if (ds.ord !== undefined) { tapOrder(+ds.ord, el); return; }
-  if (ds.ml !== undefined) { tapMatchLeft(+ds.ml); return; }
-  if (ds.mr !== undefined) { tapMatchRight(+ds.mr, el); return; }
-  if (ds.part !== undefined) { tapPart(+ds.part); return; }
+  var T = G && G.tasks[G.idx];
+  if (ds.ans !== undefined) { withLead(T.oa && T.oa[+ds.ans], function () { answer(+ds.ans, el); }); return; }
+  if (ds.ord !== undefined) { withLead(T.ia && T.ia[+ds.ord], function () { tapOrder(+ds.ord, el); }); return; }
+  if (ds.ml !== undefined) { withLead(T.pa && T.pa[+ds.ml][0], function () { tapMatchLeft(+ds.ml); }); return; }
+  if (ds.mr !== undefined) { withLead(T.pa && T.pa[+ds.mr][1], function () { tapMatchRight(+ds.mr, el); }); return; }
+  if (ds.part !== undefined) { withLead(T.ia && T.ia[+ds.part], function () { tapPart(+ds.part); }); return; }
   if ("partsdone" in ds) { partsDone(); return; }
+  if (ds.hint === "yes") { sayHtml("<b>Подсказка:</b> " + esc(T.h), "hint_point", false); play(T.ha); return; }
+  if (ds.hint === "no") { sayHtml("<b>Хорошо!</b> Попробуй ещё раз сам.", "jump_joy", false); play(D.say.try_again); return; }
   if ("quit" in ds) {
     var l = layer("<h3>Выйти из игры?</h3><p>Звёзды за решённые задания сохранятся.</p><button class=\"btn b-coral\" type=\"button\" data-yes style=\"font-size:20px\">Выйти</button><button class=\"btn-white\" type=\"button\" data-close>Играть дальше</button>");
     l.querySelector("[data-yes]").onclick = function () { clearTimeout(G && G.memTimer); G = null; view = "home"; l.remove(); render(); };
