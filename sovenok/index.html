@@ -116,7 +116,7 @@ img { display: block; max-width: 100%; }
 .isle.now .tag { background: var(--violet); }
 
 /* игра */
-.game-top { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; }
+.game-top { display: flex; gap: 8px; align-items: center; } .game-top .pebbles { flex: 1; }
 .pebbles { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 5px; }
 .pebbles i { height: 11px; border-radius: 99px; background: rgba(var(--shadow-rgb), .12); }
 .pebbles i.ok { background: var(--leaf); }
@@ -338,6 +338,7 @@ function nextIsland(stars) { for (var i = 0; i < D.islands.length; i++) if (D.is
 function stripEmoji(s) { return s.replace(/^\S+\s/, ""); }
 function starWord(n) { var m = n % 10, h = n % 100; if (m === 1 && h !== 11) return "звезда"; if (m >= 2 && m <= 4 && (h < 12 || h > 14)) return "звезды"; return "звёзд"; }
 function gamesToday() { var c = core(); return c.gd === dayNum() ? c.gn : 0; }
+function soundBtn() { return '<button class="icon-btn" type="button" data-sound aria-label="'+ (core().voice ? "Выключить звук" : "Включить звук") + '"><img src="' + IMG(core().voice ? "20_ry17/02_sound_on" : "20_ry17/06_sound_off") + '" alt=""></button>'; }
 function img(k, cls) { return '<img class="tile-img' + (cls ? " " + cls : "") + '" src="' + IMG(k) + '" alt="">'; }
 
 /* ---------- сборка игры ---------- */
@@ -537,7 +538,7 @@ function renderHome() {
   var streak = c.streak > 1 && c.last >= dayNum() - 1 ? '<span class="pill num"><img src="' + IMG("03_ui/16_flame") + '" alt="">' + c.streak + "</span>" : "";
   $app.innerHTML = '<div class="screen">' +
     '<div class="top"><span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + c.stars + "</span>" + streak +
-    '<div style="display:flex;gap:8px;align-items:center;margin-left:auto">' + pillHtml() +
+    '<div style="display:flex;gap:8px;align-items:center;margin-left:auto">' + pillHtml() + soundBtn() +
     '<button class="icon-btn" type="button" data-timer aria-label="Таймер занятия"><img src="' + IMG("03_ui/06_topic_time") + '" alt=""></button></div></div>' +
     '<div class="talk"><img class="owl" src="' + M(left > 0 ? "wave" : "sleeping_nest") + '" alt=""><div class="bubble">' + esc(c.name ? c.name + ", " + bubble[0].toLowerCase() + bubble.slice(1) : bubble) + "</div></div>" +
     '<div class="title"><h1>Совёнок Тим</h1><p>Остров «' + esc(stripEmoji(isl.name)) + "» · игр сегодня " + used + " из " + perDay() + "</p></div>" +
@@ -627,7 +628,7 @@ function renderTask(silent) {
   }
   var topicImg = D.ui.topics[t.b];
   $app.innerHTML = '<div class="screen">' +
-    '<div class="game-top"><button class="icon-btn" type="button" data-quit aria-label="Выйти из игры" style="font-weight:900;font-size:18px">✕</button><div class="pebbles">' + pebbles + "</div>" + pillHtml() +
+    '<div class="game-top"><button class="icon-btn" type="button" data-quit aria-label="Выйти из игры" style="font-weight:900;font-size:18px">✕</button><div class="pebbles">' + pebbles + "</div>" + pillHtml() + soundBtn() +
     '<span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + (G.starsBefore + G.stars) + "</span></div>" +
     '<div class="q"><span class="badge">' + (topicImg ? '<img src="' + IMG(topicImg) + '" alt="">' : "") + esc(D.blocks[t.b]) + " · ур. " + lv + "</span>" +
     (t.m === "order" || t.m === "match" ? "" : picHtml(t, st.phase)) +
@@ -868,6 +869,7 @@ $app.addEventListener("click", function (e) {
     return;
   }
   if (ds.perday) { changePerDay(+ds.perday); return; }
+  if ("sound" in ds) { core().voice = core().voice ? 0 : 1; save("core"); if (!core().voice) { try { player.pause(); } catch (e) {} } el.outerHTML = soundBtn(); return; }
   if ("voice" in ds) { core().voice = core().voice ? 0 : 1; save("core"); render(); return; }
   if ("rename" in ds) { core().asked = 0; render(); return; }
   if ("reset" in ds) { resetAll(); return; }
