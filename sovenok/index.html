@@ -358,19 +358,36 @@ function core() {
   if (!S.core) S.core = { name: null, stars: 0, streak: 0, last: 0, gd: 0, gn: 0, lv: {}, voice: 1, asked: 0 };
   return S.core;
 }
-var ADMIN = false;
-(function () {
+// SHA-256 (ASCII) — свой, синхронный: crypto.subtle есть не во всех WebView Telegram.
+function sha256(s) {
+  var K = [], H = [], i, j, p = 2;
+  function frac(x) { return (x - Math.floor(x)) * 4294967296 | 0; }
+  for (var n = 0; n < 64; p++) { for (j = 2; j * j <= p; j++) if (p % j === 0) break; if (j * j > p) { if (n < 8) H[n] = frac(Math.pow(p, 1 / 2)); K[n++] = frac(Math.pow(p, 1 / 3)); } }
+  var b = [], l = s.length * 8;
+  for (i = 0; i < s.length; i++) b[i >> 2] |= (s.charCodeAt(i) & 255) << (24 - (i % 4) * 8);
+  b[l >> 5] |= 0x80 << (24 - l % 32); b[((l + 64 >> 9) << 4) + 15] = l;
+  function r(x, c) { return (x >>> c) | (x << (32 - c)); }
+  for (i = 0; i < b.length; i += 16) {
+    var w = [], a = H.slice();
+    for (j = 0; j < 64; j++) {
+      if (j < 16) w[j] = b[i + j] | 0;
+      else w[j] = (r(w[j - 2], 17) ^ r(w[j - 2], 19) ^ (w[j - 2] >>> 10)) + w[j - 7] + (r(w[j - 15], 7) ^ r(w[j - 15], 18) ^ (w[j - 15] >>> 3)) + w[j - 16] | 0;
+      var t1 = a[7] + (r(a[4], 6) ^ r(a[4], 11) ^ r(a[4], 25)) + ((a[4] & a[5]) ^ (~a[4] & a[6])) + K[j] + w[j] | 0;
+      var t2 = (r(a[0], 2) ^ r(a[0], 13) ^ r(a[0], 22)) + ((a[0] & a[1]) ^ (a[0] & a[2]) ^ (a[1] & a[2])) | 0;
+      a = [t1 + t2 | 0, a[0], a[1], a[2], a[3] + t1 | 0, a[4], a[5], a[6]];
+    }
+    for (j = 0; j < 8; j++) H[j] = H[j] + a[j] | 0;
+  }
+  return H.map(function (x) { return ("0000000" + (x >>> 0).toString(16)).slice(-8); }).join("");
+}
+var ADMIN = (function () {
   try {
     var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
-    if (!u || !u.id || !window.crypto || !crypto.subtle || !D.admins) return;
-    crypto.subtle.digest("SHA-256", new TextEncoder().encode("tim:" + u.id)).then(function (buf) {
-      var hex = Array.prototype.map.call(new Uint8Array(buf), function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
-      if (D.admins.indexOf(hex) >= 0) { ADMIN = true; if (view === "home" || view === "parents") render(); }
-    });
-  } catch (e) {}
+    return !!(u && u.id && D.admins && D.admins.indexOf(sha256("tim:" + u.id)) >= 0);
+  } catch (e) { return false; }
 })();
 // Игр в день; у админа — без ограничений.
-function perDay() { return ADMIN ? 99 : core().perDay || D.perDay; }
+function perDay() { return ADMIN ? 9999 : core().perDay || D.perDay; }
 
 /* ---------- звук ---------- */
 var player = new Audio();
