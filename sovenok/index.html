@@ -98,7 +98,7 @@ img { display: block; max-width: 100%; }
 .next small { display: block; color: var(--ink-soft); font-weight: 800; margin-top: 5px; }
 
 /* таббар */
-.tabbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0 12px calc(10px + env(safe-area-inset-bottom, 0px)); padding: 8px; background: rgba(255,255,255,.92); border-radius: 26px; box-shadow: var(--sh-m); backdrop-filter: blur(8px); }
+.tabbar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 0 12px calc(10px + env(safe-area-inset-bottom, 0px)); padding: 8px; background: rgba(255,255,255,.92); border-radius: 26px; box-shadow: var(--sh-m); backdrop-filter: blur(8px); }
 .tab { display: grid; justify-items: center; gap: 2px; font-size: 13px; font-weight: 900; color: var(--ink-soft); padding: 6px 0; border-radius: 18px; }
 .tab img { width: 32px; height: 32px; border-radius: 10px; }
 .tab.on { color: #fff; background: linear-gradient(155deg, var(--violet), var(--violet-deep)); box-shadow: 0 10px 20px -12px rgba(106,75,232,.8); }
@@ -231,6 +231,42 @@ img { display: block; max-width: 100%; }
 .stepper button { width: 34px; height: 34px; border-radius: 50%; background: var(--card); font-weight: 900; font-size: 20px; box-shadow: var(--sh-s); }
 .stepper b { min-width: 28px; text-align: center; font-family: var(--display); font-size: 20px; }
 .muted { color: var(--ink-soft); font-size: 13px; font-weight: 700; }
+
+/* звание, награды, выпускной */
+.rank { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 5px 12px 5px 6px; border-radius: 999px; background: linear-gradient(155deg, var(--sun), var(--sun-deep)); color: #fff; font-weight: 900; font-size: 14px; box-shadow: var(--sh-s); }
+.rank img { width: 24px; height: 24px; border-radius: 50%; }
+.medals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.medal { background: var(--card); border-radius: 22px; padding: 10px 8px; box-shadow: var(--sh-s); display: grid; justify-items: center; gap: 4px; text-align: center; }
+.medal img { width: 72px; height: 72px; border-radius: 50%; }
+.medal b { font-size: 13px; line-height: 1.15; }
+.medal small { font-size: 11px; color: var(--ink-soft); font-weight: 700; line-height: 1.2; }
+.medal.locked img { filter: grayscale(1); opacity: .35; }
+.medal.locked b { color: var(--ink-soft); }
+.medal.fresh { box-shadow: 0 0 0 3px var(--sun), var(--sh-m); }
+.newmedals { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.newmedals .medal { width: 104px; }
+.gift { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1.5px solid rgba(var(--shadow-rgb), .07); font-weight: 800; }
+.gift:last-child { border-bottom: 0; }
+.gift img { width: 56px; height: 56px; border-radius: 50%; }
+.gift.locked { opacity: .45; }
+.ready { display: grid; gap: 6px; }
+.ready .row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; font-size: 14px; font-weight: 800; }
+.ready .lv { display: inline-flex; gap: 4px; }
+.ready .lv i { width: 14px; height: 14px; border-radius: 50%; background: rgba(var(--shadow-rgb), .1); }
+.ready .lv i.on { background: linear-gradient(155deg, var(--leaf), var(--leaf-deep)); }
+.celebrate { position: fixed; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, rgba(255,182,72,.35), transparent 60%), linear-gradient(180deg, var(--bg-a), var(--bg-b)); }
+.celebrate .big { width: 200px; height: 200px; border-radius: 50%; box-shadow: 0 0 0 8px rgba(255,255,255,.8), var(--sh-m); }
+.celebrate h2 { font-size: 30px; }
+.celebrate .rank { font-size: 18px; padding: 8px 18px 8px 8px; }
+.celebrate .rank img { width: 34px; height: 34px; }
+.celebrate .btn { max-width: 340px; }
+.confetti i { position: absolute; top: -20px; width: 10px; height: 16px; border-radius: 3px; animation: fall linear infinite; }
+@keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
+.diploma { width: 100%; max-width: 420px; background: #FFFDF6; border-radius: 22px; padding: 18px 16px; box-shadow: var(--sh-m); border: 6px double var(--violet); text-align: center; display: grid; gap: 6px; }
+.diploma .dt { font-family: var(--display); font-weight: 800; font-size: 34px; color: var(--violet-deep); letter-spacing: .08em; }
+.diploma .dn { font-family: var(--display); font-weight: 800; font-size: 30px; }
+.diploma small { color: var(--ink-soft); font-weight: 800; }
 
 /* слои */
 .layer { position: fixed; inset: 0; z-index: 20; background: rgba(46,42,74,.45); display: flex; align-items: flex-end; justify-content: center; }
@@ -557,20 +593,100 @@ function showLock() {
   });
 }
 
+/* ---------- звания и награды ---------- */
+function rankIdx(stars) { return island(stars === undefined ? core().stars : stars).idx; }
+function rankName(i) { return D.ranks[i === undefined ? rankIdx() : i]; }
+function cnt() { var c = core(); return c.cnt || (c.cnt = { games: 0, run: 0, order: 0, match: 0 }); }
+function medalsGot() { var c = core(); return c.medals || (c.medals = {}); }
+var MEDAL_RULES = {
+  first_game: function (c, n) { return n.games >= 1; },
+  streak3: function (c) { return c.streak >= 3; },
+  streak7: function (c) { return c.streak >= 7; },
+  run10: function (c, n) { return n.best >= 10; },
+  perfect: function (c, n) { return n.perfect >= 1; },
+  order5: function (c, n) { return n.order >= 5; },
+  match5: function (c, n) { return n.match >= 5; },
+  games10: function (c, n) { return n.games >= 10; },
+  games30: function (c, n) { return n.games >= 30; },
+  games60: function (c, n) { return n.games >= 60; },
+  stars100: function (c) { return c.stars >= 100; },
+  stars500: function (c) { return c.stars >= 500; },
+  halfway: function (c) { return rankIdx() >= 4; },
+  graduate: function (c) { return rankIdx() >= D.islands.length - 1; }
+};
+// Проверяет медали, возвращает новые.
+function checkMedals() {
+  var c = core(), n = cnt(), got = medalsGot(), fresh = [];
+  D.medals.forEach(function (m) {
+    if (got[m[0]]) return;
+    var rule = MEDAL_RULES[m[0]], ok = false;
+    if (rule) ok = rule(c, n);
+    else if (m[0].indexOf("topic_") === 0) ok = ((c.lv[m[0].slice(6)] || [1])[0] >= 3);
+    if (ok) { got[m[0]] = dayNum(); fresh.push(m); }
+  });
+  if (fresh.length) save("core");
+  return fresh;
+}
+function medalHtml(m, locked, fresh) {
+  return '<div class="medal' + (locked ? " locked" : "") + (fresh ? " fresh" : "") + '"><img src="' + IMG(m[1]) + '" alt=""><b>' + esc(m[2]) + "</b><small>" + esc(m[3]) + "</small></div>";
+}
+function confetti() {
+  var colors = ["#FF7A66", "#FFB648", "#34C2A3", "#5AA9F0", "#8E6CFF", "#FF6FA8"], h = '<div class="confetti">';
+  for (var i = 0; i < 40; i++) h += '<i style="left:' + Math.random() * 100 + "%;background:" + colors[i % 6] + ";animation-duration:" + (2.5 + Math.random() * 3) + "s;animation-delay:" + (-Math.random() * 4) + 's"></i>';
+  return h + "</div>";
+}
+// Темы, освоенные до 3-го уровня (для диплома и карты готовности).
+function masteredTopics() { var lv = core().lv; return Object.keys(D.blocks).filter(function (b) { return (lv[b] || [1])[0] >= 3; }); }
+
+/* ---------- выпускной и диплом ---------- */
+function diplomaHtml() {
+  var c = core(), d = new Date();
+  var date = d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+  return '<div class="diploma"><div class="dt">ДИПЛОМ</div><small>выпускника Школы Мудрых Сов</small>' +
+    '<img src="' + M("trophy") + '" alt="" style="width:110px;height:110px;border-radius:50%;justify-self:center">' +
+    '<small>вручается</small><div class="dn">' + esc(c.name || "моему другу") + "</div>" +
+    "<b>Готов" + "(а) к школе!</b><small>Пройдено 8 островов · " + c.stars + " звёзд · " + Object.keys(medalsGot()).length + " наград</small>" +
+    "<small>" + esc(date) + " · Совёнок Тим</small></div>";
+}
+function renderGraduation() {
+  var c = core();
+  c.graduated = c.graduated || dayNum(); save("core");
+  view = "graduation";
+  $app.innerHTML = '<div class="screen celebrate" style="position:relative;overflow-y:auto">' + confetti() +
+    '<img class="big" src="' + M("party_hat") + '" alt=""><h2>Поздравляем' + (c.name ? ", " + esc(c.name) : "") + "!</h2>" +
+    '<p class="muted" style="font-size:17px;max-width:30ch">Ты пролетел все острова и закончил Школу Мудрых Сов. Теперь ты готов к школе!</p>' +
+    '<span class="rank"><img src="' + IMG("25_medals/10_galaxy") + '" alt="">' + esc(rankName(D.islands.length - 1)) + "</span>" +
+    diplomaHtml() +
+    '<button class="btn b-violet" type="button" data-diploma>Получить диплом в чат<small>картинка и PDF для печати</small></button>' +
+    '<button class="btn-white" type="button" data-go="home" style="max-width:340px">На главную</button></div>';
+  playNamed(D.say.graduate);
+}
+function sendDiploma() {
+  var c = core();
+  var data = { t: "diploma", name: c.name || "", stars: c.stars, medals: Object.keys(medalsGot()).length,
+    topics: masteredTopics().map(function (b) { return D.blocks[b]; }) };
+  // Отправить данные боту можно, только если игра открыта кнопкой «🦉 Открыть игру» внизу чата.
+  var viaKeyboard = tg && tg.sendData && tg.initDataUnsafe && !tg.initDataUnsafe.query_id && tg.initData;
+  if (viaKeyboard) { try { tg.sendData(JSON.stringify(data)); return; } catch (e) {} }
+  layer("<h3>Как получить диплом</h3><p>Закройте игру и откройте её кнопкой <b>«🦉 Открыть игру»</b> внизу чата с ботом (не кнопкой «Играть» слева). Потом снова нажмите «Получить диплом» — бот пришлёт его в чат.</p><button class=\"btn-white\" type=\"button\" data-close>Понятно</button>");
+}
+
 /* ---------- экраны ---------- */
 var view = "home", G = null;
 function tabbar() {
-  var tabs = [["home", "Дом", "03_ui/30_home"], ["map", "Карта", "02_islands/29_compass"], ["parents", "Взрослым", "03_ui/07_topic_family"]];
+  var tabs = [["home", "Дом", "03_ui/30_home"], ["map", "Карта", "02_islands/29_compass"], ["awards", "Награды", "03_ui/18_trophy"], ["parents", "Взрослым", "03_ui/07_topic_family"]];
   return '<nav class="tabbar">' + tabs.map(function (t) {
     return '<button class="tab' + (view === t[0] ? " on" : "") + '" type="button" data-go="' + t[0] + '"><img src="' + IMG(t[2]) + '" alt="">' + t[1] + "</button>";
   }).join("") + "</nav>";
 }
 function render() {
-  if (tg && tg.BackButton) { if (view === "map" || view === "parents") tg.BackButton.show(); else tg.BackButton.hide(); }
+  if (tg && tg.BackButton) { if (view === "map" || view === "parents" || view === "awards") tg.BackButton.show(); else tg.BackButton.hide(); }
   if (!core().asked) return renderName();
   if (view === "home") renderHome();
   else if (view === "map") renderMap();
   else if (view === "parents") renderParents();
+  else if (view === "awards") renderAwards();
+  else if (view === "graduation") renderGraduation();
   else if (view === "game") renderTask();
 }
 
@@ -594,7 +710,7 @@ function renderHome() {
     '<div style="display:flex;gap:8px;align-items:center;margin-left:auto">' + pillHtml() + soundBtn() +
     '<button class="icon-btn" type="button" data-timer aria-label="Таймер занятия"><img src="' + IMG("03_ui/06_topic_time") + '" alt=""></button></div></div>' +
     '<div class="talk"><img class="owl" src="' + M(left > 0 ? "wave" : "sleeping_nest") + '" alt=""><div class="bubble">' + esc(c.name ? c.name + ", " + bubble[0].toLowerCase() + bubble.slice(1) : bubble) + "</div></div>" +
-    '<div class="title"><h1>Совёнок Тим</h1><p>Остров «' + esc(stripEmoji(isl.name)) + "» · " + (ADMIN ? "без ограничений" : "игр сегодня " + used + " из " + perDay()) + "</p></div>" +
+    '<div class="title"><h1>Совёнок Тим</h1><p>Остров «' + esc(stripEmoji(isl.name)) + "» · " + (ADMIN ? "без ограничений" : "игр сегодня " + used + " из " + perDay()) + '</p><span class="rank"><img src="' + IMG(D.ui.islands[isl.idx]) + '" alt="">' + esc(rankName(isl.idx)) + "</span></div>" +
     '<button class="hero-card b-violet" type="button" data-play' + (left > 0 ? "" : " disabled") + ">" +
     "<h2>" + (left > 0 ? "Играть!" : "До завтра!") + "</h2><p>" + (left > 0 ? D.perSession + " заданий · около 10 минут" : "Новые игры откроются завтра") + "</p>" +
     '<img class="owl" src="' + M(left > 0 ? "flying" : "sleeping_nest") + '" alt=""></button>' +
@@ -847,6 +963,11 @@ function finishTask(result, stars, text, pose, good) {
   G.marks[G.idx] = result === 2 ? "ok" : result === 1 ? "half" : "bad";
   core().stars += stars;
   recordAnswer(t, result);
+  var n = cnt();
+  n.run = result === 2 ? n.run + 1 : 0; n.best = Math.max(n.best || 0, n.run);
+  if (result > 0 && t.m === "order") n.order++;
+  if (result > 0 && t.m === "match") n.match++;
+  G.newMedals = (G.newMedals || []).concat(checkMedals());
   save("core"); save("seen"); save("stats");
   Array.prototype.forEach.call(document.querySelectorAll("[data-ans],[data-ord],[data-ml],[data-mr],[data-part]"), function (b) { b.disabled = true; });
   sayHtml(text, pose, good);
@@ -859,7 +980,10 @@ function finishTask(result, stars, text, pose, good) {
   }, result === 0 ? 2600 : 1500);
 }
 function renderResult() {
+  var n = cnt(); n.games++; if (G.first === G.tasks.length) n.perfect = (n.perfect || 0) + 1;
+  var fresh = (G.newMedals || []).concat(checkMedals());
   var c = core(), before = G.starsBefore, newIsl = island(before).idx !== island(c.stars).idx, nx = nextIsland(c.stars);
+  var graduateNow = island(c.stars).idx === D.islands.length - 1 && !c.graduated;
   var canPlay = gamesToday() < perDay();
   view = "result";
   $app.innerHTML = '<div class="screen result">' +
@@ -867,15 +991,61 @@ function renderResult() {
     "<h2>" + (newIsl ? "Новый остров: «" + esc(stripEmoji(island(c.stars).name)) + "»!" : "Игра пройдена" + (c.name ? ", " + esc(c.name) : "") + "!") + "</h2>" +
     '<div class="plus-stars num">+' + G.stars + ' <img src="' + IMG("03_ui/14_star") + '" alt=""></div>' +
     '<div class="stats"><div class="card stat"><b class="num">' + G.first + " / " + G.tasks.length + '</b><span>с первой попытки</span></div><div class="card stat"><b class="num">🔥 ' + c.streak + "</b><span>" + (c.streak === 1 ? "день" : "дня подряд") + "</span></div></div>" +
+    (fresh.length ? '<div style="width:100%"><h3 style="font-size:20px;margin-bottom:8px">Новые награды!</h3><div class="newmedals">' + fresh.map(function (m) { return medalHtml(m, false, true); }).join("") + "</div></div>" : "") +
     (nx ? '<div class="card next" style="width:100%;text-align:left"><img class="tile-img" src="' + IMG(D.ui.islands[nx.idx]) + '" alt=""><div><b>До острова «' + esc(stripEmoji(nx.name)) + '»</b><div class="bar"><i style="width:' + Math.round(100 * (c.stars - D.islands[nx.idx - 1][0]) / (nx.need - D.islands[nx.idx - 1][0])) + '%"></i></div><small class="num">ещё ' + (nx.need - c.stars) + " " + starWord(nx.need - c.stars) + "</small></div></div>" : "") +
     '<div style="width:100%;display:grid;gap:12px;margin-top:auto">' +
     (canPlay ? '<button class="btn b-violet" type="button" data-play>Ещё игра<small>' + (ADMIN ? "без ограничений" : "осталось " + (perDay() - gamesToday()) + " на сегодня") + "</small></button>" : '<p class="muted" style="font-size:16px">На сегодня всё — до завтра! 🦉</p>') +
     '<button class="btn-white" type="button" data-go="home">На главную</button></div></div>';
-  playNamed(newIsl ? D.say.island : D.say.done);
   G = null;
+  if (graduateNow) { renderGraduation(); return; }
+  if (newIsl) {
+    // Новое звание — праздничный экран поверх итогов.
+    var ri = rankIdx(), l = document.createElement("div");
+    l.className = "celebrate";
+    l.innerHTML = confetti() + '<img class="big" src="' + IMG(D.ui.islands[ri]) + '" alt=""><h2>Новый остров!</h2><p class="muted" style="font-size:17px">Теперь твоё звание:</p>' +
+      '<span class="rank"><img src="' + M("trophy") + '" alt="">' + esc(rankName(ri)) + '</span><button class="btn b-violet" type="button">Ура!</button>';
+    document.body.appendChild(l);
+    l.querySelector("button").onclick = function () { l.remove(); };
+    playNamed(D.rankSay[ri]);
+  } else {
+    playNamed(fresh.length ? D.say.medal : D.say.done);
+  }
+}
+
+/* ---------- награды ---------- */
+function renderAwards() {
+  var c = core(), got = medalsGot(), ri = rankIdx(), nx = nextIsland(c.stars);
+  var earned = D.medals.filter(function (m) { return got[m[0]]; }).length;
+  var gifts = D.islands.map(function (x, i) {
+    var open = i <= ri, link = D.gifts && D.gifts[i];
+    return '<div class="gift' + (open ? "" : " locked") + '"><img class="tile-img" src="' + IMG(D.ui.islands[i]) + '" alt=""><span>Раскраска «' + esc(stripEmoji(x[1])) + "»</span>" +
+      (open && link ? '<button class="s" type="button" data-gift="' + i + '" style="background:linear-gradient(155deg,var(--leaf),var(--leaf-deep));color:#fff;border-radius:999px;padding:8px 14px;font-weight:900">Открыть</button>' : '<small class="muted">' + (open ? "скоро" : x[0] + " ⭐") + "</small>") + "</div>";
+  }).join("");
+  $app.innerHTML = '<div class="screen"><div class="top"><h1 style="font-size:28px">Мои награды</h1><span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + c.stars + "</span></div>" +
+    '<div class="card" style="text-align:center;display:grid;gap:8px;justify-items:center"><img class="tile-img" src="' + IMG(D.ui.islands[ri]) + '" alt="" style="width:110px;height:110px;border-radius:50%">' +
+    '<div class="k">Моё звание</div><span class="rank" style="font-size:17px">' + esc(rankName(ri)) + "</span>" +
+    (nx ? '<small class="muted">Следующее — «' + esc(rankName(nx.idx)) + "» через " + (nx.need - c.stars) + " " + starWord(nx.need - c.stars) + "</small>" : '<small class="muted">Все звания получены! 🎓</small>') + "</div>" +
+    (c.graduated ? '<button class="btn b-violet" type="button" data-go="graduation">🎓 Мой диплом</button>' : "") +
+    '<h2 style="font-size:22px">Медали · ' + earned + " из " + D.medals.length + "</h2>" +
+    '<div class="medals">' + D.medals.map(function (m) { return medalHtml(m, !got[m[0]]); }).join("") + "</div>" +
+    '<h2 style="font-size:22px">Подарки за острова</h2><div class="card">' + gifts + "</div>" +
+    '<div class="card" style="text-align:center"><b>Главный приз</b><p class="muted" style="margin-top:4px">Пролети все 8 островов — и получишь именной диплом выпускника Школы Мудрых Сов!</p></div>' +
+    "</div>" + tabbar();
 }
 
 /* ---------- для взрослых ---------- */
+function readinessHtml() {
+  var lv = core().lv, keys = Object.keys(D.blocks), sum = 0;
+  var rows = keys.map(function (b) {
+    var l = (lv[b] || [0])[0] || 0; sum += l;
+    var dots = ""; for (var i = 1; i <= 3; i++) dots += "<i" + (i <= l ? ' class="on"' : "") + "></i>";
+    return '<div class="row"><span>' + esc(D.blocks[b]) + '</span><span class="lv">' + dots + "</span></div>";
+  }).join("");
+  var pct = Math.round(100 * sum / (keys.length * 3));
+  return '<div class="card"><div class="k">Карта готовности к школе</div><div class="v num" style="margin:4px 0 8px">' + pct + '%</div>' +
+    '<div class="bar" style="margin-bottom:10px"><i style="width:' + pct + '%"></i></div><div class="ready">' + rows + "</div>" +
+    '<p class="muted" style="margin-top:8px">Кружки — уровень темы: 1 — знакомимся, 2 — получается, 3 — освоено.</p></div>';
+}
 function renderParents() {
   var c = core(), today = dayNum(), days = 0, total = 0, first = 0, per = {};
   var week = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"], cells = "";
@@ -895,6 +1065,7 @@ function renderParents() {
   var tips = weak.map(function (b) { return '<div class="tip wide"><b>🎯 Потренируйте: ' + esc(D.blocks[b]) + "</b>" + esc(D.tips[b][0].toUpperCase() + D.tips[b].slice(1)) + ".</div>"; }).join("");
   var left = timerLeft(), tlabel = TIMER().locked ? "время вышло" : left !== null ? "осталось " + fmt(left) : "выключен";
   $app.innerHTML = '<div class="screen"><div><h1 style="font-size:28px">Для взрослых</h1><p class="muted">' + (c.name ? esc(c.name) + " · " : "") + "отчёт за последние 7 дней</p></div>" +
+    readinessHtml() +
     '<div class="bento">' +
     '<div class="card"><div class="k">Дней с занятиями</div><div class="v num">' + days + ' / 7</div><div class="week">' + cells + "</div></div>" +
     '<div class="card"><div class="k">С первой попытки</div><div class="ring" style="background:conic-gradient(var(--violet) 0 ' + pct + '%, rgba(46,42,90,.08) ' + pct + '% 100%)"><b class="num">' + pct + "%</b></div><div class=\"k num\" style=\"margin-top:6px\">заданий: " + total + "</div></div>" +
@@ -905,6 +1076,7 @@ function renderParents() {
     '<div class="setting"><span>⏱ Таймер: ' + tlabel + '</span><button class="s" type="button" data-timer>Настроить</button></div>' +
     '<div class="setting"><span>🔊 Озвучка</span><button class="s" type="button" data-voice>' + (c.voice ? "Выключить" : "Включить") + "</button></div>" +
     '<div class="setting"><span>✏️ Имя: ' + (c.name ? esc(c.name) : "не указано") + '</span><button class="s" type="button" data-rename>Изменить</button></div>' +
+    (ADMIN ? '<div class="setting"><span>🎓 Выпускной (проверка)</span><button class="s" type="button" data-gradpreview>Показать</button></div>' : "") +
     '<div class="setting"><span>🗑 Начать заново</span><button class="s" type="button" data-reset>Сбросить</button></div></div>' +
     '<p class="muted wide">Сложность подстраивается сама по каждой теме. Хвалите за старание — это важнее правильных ответов 💛</p>' +
     "</div></div>" + tabbar();
@@ -949,6 +1121,9 @@ $app.addEventListener("click", function (e) {
   if ("voice" in ds) { core().voice = core().voice ? 0 : 1; save("core"); render(); return; }
   if ("rename" in ds) { core().asked = 0; render(); return; }
   if ("reset" in ds) { resetAll(); return; }
+  if ("diploma" in ds) { sendDiploma(); return; }
+  if (ds.gift !== undefined) { var url = new URL(D.gifts[+ds.gift], location.href).href; try { tg.openLink(url); } catch (e) { window.open(url, "_blank"); } return; }
+  if ("gradpreview" in ds) { renderGraduation(); return; }
 });
 if (tg && tg.BackButton) tg.BackButton.onClick(function () { if (view !== "game") { view = "home"; render(); } });
 
