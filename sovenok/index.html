@@ -621,9 +621,9 @@ function renderTask(silent) {
   else if (t.m === "match") body = matchHtml(t, st);
   else if (t.m === "parts") body = partsHtml(t, st);
   else if (st.phase === "ask") {
-    var lbls = t.o, cls = answersClass(lbls), rowMode = cls === "";
+    var lbls = t.o, cls = t.nolabel ? (t.o.length === 3 ? "cols-3" : "cols-2") : answersClass(lbls), rowMode = cls === "";
     body = '<div class="answers ' + cls + '">' + t.o.map(function (o, i) {
-      return ansButton(i, o, t.oi && t.oi[i], { row: rowMode, cls: st.removed[i] ? "wrong" : "", disabled: st.removed[i] });
+      return ansButton(i, t.nolabel ? "" : o, t.oi && t.oi[i], { row: rowMode, cls: st.removed[i] ? "wrong" : "", disabled: st.removed[i] });
     }).join("") + "</div>";
   }
   var topicImg = D.ui.topics[t.b];
