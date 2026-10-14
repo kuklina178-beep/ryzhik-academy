@@ -193,6 +193,11 @@ img { display: block; max-width: 100%; }
 .say p b { color: var(--violet-deep); }
 .hint-btns { display: flex; gap: 8px; margin-top: 10px; }
 .hint-btns button { flex: 1; border-radius: 999px; padding: 10px 12px; font-weight: 900; font-size: 16px; background: rgba(var(--shadow-rgb), .07); }
+.back-fab { position: fixed; left: 14px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 20; display: grid; justify-items: center; gap: 0; width: 76px; padding: 6px 0 8px; border-radius: 26px; background: #fff; box-shadow: var(--sh-m); }
+.back-fab img { width: 48px; height: 48px; transform: scaleX(-1); border-radius: 12px; }
+.back-fab span { font-weight: 900; font-size: 13px; color: #3f9a2a; line-height: 1; }
+.back-fab:active { transform: scale(.94); }
+.screen:has(.back-fab) { padding-bottom: 110px; }
 .why-btns button { background: #fff; color: var(--violet-deep); box-shadow: var(--sh-s); }
 .why-btns button[data-next] { background: linear-gradient(155deg, var(--violet), var(--violet-deep)); color: #fff; }
 .hint-btns button[data-hint="yes"] { background: linear-gradient(155deg, var(--sun), var(--sun-deep)); color: #fff; }
@@ -840,14 +845,15 @@ function renderTask(silent) {
   }
   var topicImg = D.ui.topics[t.b];
   $app.innerHTML = '<div class="screen">' +
-    '<div class="game-top"><button class="icon-btn" type="button" data-quit aria-label="Выйти из игры" style="font-weight:900;font-size:18px">✕</button>' +
-    (G.idx > 0 ? '<button class="icon-btn" type="button" data-back aria-label="Предыдущее задание" style="font-weight:900;font-size:20px">←</button>' : "") +
-    '<div class="pebbles">' + pebbles + "</div>" + pillHtml() + soundBtn() +
+    '<div class="game-top"><button class="icon-btn" type="button" data-quit aria-label="Выйти из игры" style="font-weight:900;font-size:18px">✕</button><div class="pebbles">' + pebbles + "</div>" + pillHtml() + soundBtn() +
     '<span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + (G.starsBefore + G.stars) + "</span></div>" +
     '<div class="q"><span class="badge">' + (topicImg ? '<img src="' + IMG(topicImg) + '" alt="">' : "") + esc(D.blocks[t.b]) + " · ур. " + lv + "</span>" +
     (t.m === "order" || t.m === "match" ? "" : picHtml(t, st.phase)) +
     (st.phase === "ask" ? '<div class="qtext">' + esc(t.q) + '</div><button class="speak" type="button" data-speak><i><img src="' + IMG("03_ui/23_speaker") + '" alt=""></i>Послушать ещё раз</button>' : "") +
-    "</div>" + body + '<div id="say"></div></div>';
+    "</div>" + body + '<div id="say"></div>' +
+    // «Назад» — плавающая кнопка внизу слева, видна без прокрутки
+    (G.idx > 0 ? '<button class="back-fab" type="button" data-back aria-label="Предыдущее задание"><img src="' + IMG("20_ry17/01_next") + '" alt=""><span>Назад</span></button>' : "") +
+    "</div>";
   speakBtn = document.querySelector("[data-speak]");
   if (st.phase === "remember") {
     if (!silent) play(D.say.remember);
