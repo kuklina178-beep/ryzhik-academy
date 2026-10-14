@@ -193,6 +193,8 @@ img { display: block; max-width: 100%; }
 .say p b { color: var(--violet-deep); }
 .hint-btns { display: flex; gap: 8px; margin-top: 10px; }
 .hint-btns button { flex: 1; border-radius: 999px; padding: 10px 12px; font-weight: 900; font-size: 16px; background: rgba(var(--shadow-rgb), .07); }
+.why-btns button { background: #fff; color: var(--violet-deep); box-shadow: var(--sh-s); }
+.why-btns button[data-next] { background: linear-gradient(155deg, var(--violet), var(--violet-deep)); color: #fff; }
 .hint-btns button[data-hint="yes"] { background: linear-gradient(155deg, var(--sun), var(--sun-deep)); color: #fff; }
 .say.good p { background: linear-gradient(155deg, var(--leaf), var(--leaf-deep)); color: #fff; }
 .say.good p b { color: #fff; }
@@ -381,10 +383,15 @@ function sha256(s) {
   }
   return H.map(function (x) { return ("0000000" + (x >>> 0).toString(16)).slice(-8); }).join("");
 }
+// Кнопка под полем ввода (reply-клавиатура) не передаёт игре, кто её открыл, —
+// поэтому бот кладёт админу метку в адрес: ?a=<хэш>. Кнопка «Играть» передаёт пользователя.
 var ADMIN = (function () {
   try {
+    if (!D.admins) return false;
+    var a = new URLSearchParams(location.search).get("a");
+    if (a && D.admins.indexOf(a) >= 0) return true;
     var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
-    return !!(u && u.id && D.admins && D.admins.indexOf(sha256("tim:" + u.id)) >= 0);
+    return !!(u && u.id && D.admins.indexOf(sha256("tim:" + u.id)) >= 0);
   } catch (e) { return false; }
 })();
 // Игр в день; у админа — без ограничений.
@@ -421,6 +428,7 @@ function play(file) {
 // Имя ребёнка звучит перед фразой: «Маша! Полетели!» (если имя есть в списке озвученных).
 function nameClip() { var n = core().name; return n && D.names ? D.names[n.trim().toLowerCase().replace(/ё/g, "е")] || null : null; }
 // Говорит ли совёнок сейчас (или ждёт очередь фраз).
+function stopVoice() { queue = []; try { player.pause(); } catch (e) {} }
 function busy() { return core().voice && (queue.length > 0 || (!player.paused && !player.ended)); }
 // Автоматические фразы (вопрос следующего задания) не перебивают — встают в очередь.
 function playAfter(file) { if (!file || !core().voice) return; if (busy()) queue.push(file); else play(file); }
@@ -454,12 +462,15 @@ D.tasks.forEach(function (t) { (BY_BLOCK[t.b] = BY_BLOCK[t.b] || []).push(t); })
 function seenSet() { var s = {}, from = dayNum() - 14; S.seen.forEach(function (p) { if (p[1] >= from) s[p[0]] = 1; }); return s; }
 function pickFrom(pool, level, seen, taken) {
   pool = pool.filter(function (t) { return !taken[t.id]; });
-  var conds = [
+  // Админу — все уровни сразу: сначала ещё не виденные задания любого уровня.
+  if (ADMIN) level = 3;
+  var conds = ADMIN ? [function (t) { return !seen[TASK_INDEX[t.id]]; }] : [];
+  conds = conds.concat([
     function (t) { return t.l === level && !seen[TASK_INDEX[t.id]]; },
     function (t) { return t.l <= level && !seen[TASK_INDEX[t.id]]; },
     function (t) { return t.l <= level; },
     function () { return true; }
-  ];
+  ]);
   for (var i = 0; i < conds.length; i++) { var c = pool.filter(conds[i]); if (c.length) return pick(c); }
   return null;
 }
@@ -988,14 +999,23 @@ function finishTask(result, stars, text, pose, good) {
   G.newMedals = (G.newMedals || []).concat(checkMedals());
   save("core"); save("seen"); save("stats");
   Array.prototype.forEach.call(document.querySelectorAll("[data-ans],[data-ord],[data-ml],[data-mr],[data-part]"), function (b) { b.disabled = true; });
-  sayHtml(text, pose, good);
+  // «Почему?» — совёнок объяснит ответ; пока ребёнок слушает, следующее задание ждёт.
+  sayHtml(text + (t.w ? whyBtns() : ""), pose, good);
   var say = document.getElementById("say"); if (say && say.scrollIntoView) say.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  // Следующее задание — когда совёнок договорит похвалу или подсказку.
-  whenIdle(function () {
-    if (view !== "game" || !G || TIMER().locked) return;
-    G.idx++;
-    if (G.idx < G.tasks.length) { renderTask(); var sc = document.querySelector(".screen"); if (sc) sc.scrollTop = 0; } else renderResult();
-  }, result === 0 ? 2600 : 1500);
+  G.waitWhy = false;
+  var idx = G.idx;
+  // Следующее задание — когда совёнок договорит похвалу (и есть пара секунд нажать «Почему?»).
+  whenIdle(function () { if (G && G.idx === idx && !G.waitWhy) nextTask(); }, (result === 0 ? 2600 : 1500) + (t.w ? 2500 : 0));
+}
+function whyBtns(onlyNext) {
+  return '<span class="hint-btns why-btns">' + (onlyNext ? "" : '<button type="button" data-why>🤔 Почему?</button>') +
+    '<button type="button" data-next>Дальше ➜</button></span>';
+}
+function nextTask() {
+  if (view !== "game" || !G || TIMER().locked || !G.cur || !G.cur.done) return;
+  G.cur.done = false;  // защита от двойного перехода
+  G.idx++;
+  if (G.idx < G.tasks.length) { renderTask(); var sc = document.querySelector(".screen"); if (sc) sc.scrollTop = 0; } else renderResult();
 }
 function renderResult() {
   var n = cnt(); n.games++; if (G.first === G.tasks.length) n.perfect = (n.perfect || 0) + 1;
@@ -1136,6 +1156,8 @@ $app.addEventListener("click", function (e) {
   if (ds.mr !== undefined) { withLead(T.pa && T.pa[+ds.mr][1], function () { tapMatchRight(+ds.mr, el); }); return; }
   if (ds.part !== undefined) { withLead(T.ia && T.ia[+ds.part], function () { tapPart(+ds.part); }); return; }
   if ("partsdone" in ds) { partsDone(); return; }
+  if ("why" in ds && T && T.w) { G.waitWhy = true; sayHtml("<b>Почему?</b> " + esc(T.w) + whyBtns(true), "reading", false); play(T.wa); return; }
+  if ("next" in ds) { stopVoice(); nextTask(); return; }
   if (ds.hint === "yes") { sayHtml("<b>Подсказка:</b> " + esc(T.h), "hint_point", false); play(T.ha); return; }
   if (ds.hint === "no") { sayHtml("<b>Хорошо!</b> Попробуй ещё раз сам.", "jump_joy", false); play(D.say.try_again); return; }
   if ("quit" in ds) {
