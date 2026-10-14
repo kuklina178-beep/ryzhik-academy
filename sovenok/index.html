@@ -313,7 +313,7 @@ img { display: block; max-width: 100%; }
 </head>
 <body>
 <div id="app"><div class="loading">Совёнок Тим просыпается…</div></div>
-<script src="data.js?v=7e7de670"></script>
+<script src="data.js?v=61773743"></script>
 <script>
 (function () {
 "use strict";
@@ -469,7 +469,13 @@ function img(k, cls) { return '<img class="tile-img' + (cls ? " " + cls : "") + 
 /* ---------- сборка игры ---------- */
 var BY_BLOCK = {};
 D.tasks.forEach(function (t) { (BY_BLOCK[t.b] = BY_BLOCK[t.b] || []).push(t); });
-function seenSet() { var s = {}, from = dayNum() - 14; S.seen.forEach(function (p) { if (p[1] >= from) s[p[0]] = 1; }); return s; }
+// Задание → день, когда его видели последний раз (за 14 дней).
+function seenSet() { var s = {}, from = dayNum() - 14; S.seen.forEach(function (p) { if (p[1] >= from) s[p[0]] = p[1] + 1; }); return s; }
+// Когда невиденных не осталось — то, что видели давнее всего (а не случайное вчерашнее).
+function oldest(list, seen) {
+  var min = Infinity; list.forEach(function (t) { min = Math.min(min, seen[TASK_INDEX[t.id]] || 0); });
+  return pick(list.filter(function (t) { return (seen[TASK_INDEX[t.id]] || 0) === min; }));
+}
 function pickFrom(pool, level, seen, taken) {
   pool = pool.filter(function (t) { return !taken[t.id]; });
   // Админу — все уровни сразу: сначала ещё не виденные задания любого уровня.
@@ -481,7 +487,10 @@ function pickFrom(pool, level, seen, taken) {
     function (t) { return t.l <= level; },
     function () { return true; }
   ]);
-  for (var i = 0; i < conds.length; i++) { var c = pool.filter(conds[i]); if (c.length) return pick(c); }
+  for (var i = 0; i < conds.length; i++) {
+    var c = pool.filter(conds[i]);
+    if (c.length) return i < conds.length - 2 ? pick(c) : oldest(c, seen);  // повторы — самые давние
+  }
   return null;
 }
 function neighboursOk(seq, strict) {
