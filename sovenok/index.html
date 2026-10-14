@@ -319,7 +319,7 @@ img { display: block; max-width: 100%; }
 </head>
 <body>
 <div id="app"><div class="loading">Совёнок Тим просыпается…</div></div>
-<script src="data.js?v=478a29ae"></script>
+<script src="data.js?v=4e606c7e"></script>
 <script>
 (function () {
 "use strict";
@@ -1151,11 +1151,14 @@ function renderAwards() {
     '<div class="card" style="text-align:center;display:grid;gap:8px;justify-items:center"><img class="tile-img" src="' + IMG(D.ui.islands[ri]) + '" alt="" style="width:110px;height:110px;border-radius:50%">' +
     '<div class="k">Моё звание</div><span class="rank" data-ranknow style="font-size:17px;cursor:pointer">' + esc(rankName(ri)) + "</span>" +
     (nx ? '<small class="muted">Следующее — «' + esc(rankName(nx.idx)) + "» через " + (nx.need - c.stars) + " " + starWord(nx.need - c.stars) + "</small>" : '<small class="muted">Все звания получены! 🎓</small>') + "</div>" +
-    (c.graduated ? '<button class="btn b-violet" type="button" data-go="graduation">🎓 Мой диплом</button>' : "") +
     '<h2 style="font-size:22px">Медали · ' + earned + " из " + D.medals.length + "</h2>" +
     '<div class="medals">' + D.medals.map(function (m) { return medalHtml(m, !got[m[0]]); }).join("") + "</div>" +
     '<h2 style="font-size:22px">Подарки за острова</h2><div class="card">' + gifts + "</div>" +
-    '<div class="card" style="text-align:center"><b>Главный приз</b><p class="muted" style="margin-top:4px">Пролети все 8 островов — и получишь именной диплом выпускника Школы Мудрых Сов!</p></div>' +
+    // Диплом — в самом низу, после раскрасок: после выпуска одна кнопка «в чат».
+    (c.graduated || ri === D.islands.length - 1
+      ? '<div class="card" style="text-align:center;display:grid;gap:10px"><b>🎓 Мой диплом</b><p class="muted">Именной диплом выпускника Школы Мудрых Сов: картинка и файл для печати.</p>' +
+        '<button class="btn b-violet" type="button" data-diploma>Получить диплом в чат</button></div>'
+      : '<div class="card" style="text-align:center"><b>Главный приз</b><p class="muted" style="margin-top:4px">Пролети все 8 островов — и получишь именной диплом выпускника Школы Мудрых Сов!</p></div>') +
     "</div>" + tabbar();
 }
 
