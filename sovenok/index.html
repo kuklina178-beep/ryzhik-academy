@@ -839,7 +839,9 @@ function renderTask(silent) {
   }
   var topicImg = D.ui.topics[t.b];
   $app.innerHTML = '<div class="screen">' +
-    '<div class="game-top"><button class="icon-btn" type="button" data-quit aria-label="Выйти из игры" style="font-weight:900;font-size:18px">✕</button><div class="pebbles">' + pebbles + "</div>" + pillHtml() + soundBtn() +
+    '<div class="game-top"><button class="icon-btn" type="button" data-quit aria-label="Выйти из игры" style="font-weight:900;font-size:18px">✕</button>' +
+    (G.idx > 0 ? '<button class="icon-btn" type="button" data-back aria-label="Предыдущее задание" style="font-weight:900;font-size:20px">←</button>' : "") +
+    '<div class="pebbles">' + pebbles + "</div>" + pillHtml() + soundBtn() +
     '<span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + (G.starsBefore + G.stars) + "</span></div>" +
     '<div class="q"><span class="badge">' + (topicImg ? '<img src="' + IMG(topicImg) + '" alt="">' : "") + esc(D.blocks[t.b]) + " · ур. " + lv + "</span>" +
     (t.m === "order" || t.m === "match" ? "" : picHtml(t, st.phase)) +
@@ -988,16 +990,21 @@ function answer(i, btn) {
 function finishTask(result, stars, text, pose, good) {
   var t = G.tasks[G.idx], st = G.cur;
   st.done = true;
-  G.stars += stars; if (result === 2) G.first++;
-  G.marks[G.idx] = result === 2 ? "ok" : result === 1 ? "half" : "bad";
-  core().stars += stars;
-  recordAnswer(t, result);
-  var n = cnt();
-  n.run = result === 2 ? n.run + 1 : 0; n.best = Math.max(n.best || 0, n.run);
-  if (result > 0 && t.m === "order") n.order++;
-  if (result > 0 && t.m === "match") n.match++;
-  G.newMedals = (G.newMedals || []).concat(checkMedals());
-  save("core"); save("seen"); save("stats");
+  if (G.replay && G.replay[G.idx]) {
+    // Вернулись кнопкой «Назад»: задание уже засчитано — звёзды и статистику не трогаем.
+    text = text.replace(/ \+\d+ ⭐/, "");
+  } else {
+    G.stars += stars; if (result === 2) G.first++;
+    G.marks[G.idx] = result === 2 ? "ok" : result === 1 ? "half" : "bad";
+    core().stars += stars;
+    recordAnswer(t, result);
+    var n = cnt();
+    n.run = result === 2 ? n.run + 1 : 0; n.best = Math.max(n.best || 0, n.run);
+    if (result > 0 && t.m === "order") n.order++;
+    if (result > 0 && t.m === "match") n.match++;
+    G.newMedals = (G.newMedals || []).concat(checkMedals());
+    save("core"); save("seen"); save("stats");
+  }
   Array.prototype.forEach.call(document.querySelectorAll("[data-ans],[data-ord],[data-ml],[data-mr],[data-part]"), function (b) { b.disabled = true; });
   // «Почему?» — совёнок объяснит ответ; пока ребёнок слушает, следующее задание ждёт.
   sayHtml(text + (t.w ? whyBtns() : ""), pose, good);
@@ -1158,6 +1165,13 @@ $app.addEventListener("click", function (e) {
   if ("partsdone" in ds) { partsDone(); return; }
   if ("why" in ds && T && T.w) { G.waitWhy = true; sayHtml("<b>Почему?</b> " + esc(T.w) + whyBtns(true), "reading", false); play(T.wa); return; }
   if ("next" in ds) { stopVoice(); nextTask(); return; }
+  if ("back" in ds && G && G.idx > 0) {
+    // Назад: предыдущее задание заново, без повторных звёзд.
+    stopVoice(); clearTimeout(G.memTimer);
+    G.idx--; (G.replay = G.replay || {})[G.idx] = true; G.cur = null;
+    renderTask(); var sc = document.querySelector(".screen"); if (sc) sc.scrollTop = 0;
+    return;
+  }
   if (ds.hint === "yes") { sayHtml("<b>Подсказка:</b> " + esc(T.h), "hint_point", false); play(T.ha); return; }
   if (ds.hint === "no") { sayHtml("<b>Хорошо!</b> Попробуй ещё раз сам.", "jump_joy", false); play(D.say.try_again); return; }
   if ("quit" in ds) {
