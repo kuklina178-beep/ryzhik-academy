@@ -709,7 +709,7 @@ function tabbar() {
   }).join("") + "</nav>";
 }
 function render() {
-  if (tg && tg.BackButton) { if (view === "map" || view === "parents" || view === "awards") tg.BackButton.show(); else tg.BackButton.hide(); }
+  if (tg && tg.BackButton) { if (view === "map" || view === "parents" || view === "awards" || view === "catalog") tg.BackButton.show(); else tg.BackButton.hide(); }
   if (!core().asked) return renderName();
   if (view === "home") renderHome();
   else if (view === "map") renderMap();
@@ -717,6 +717,7 @@ function render() {
   else if (view === "awards") renderAwards();
   else if (view === "graduation") renderGraduation();
   else if (view === "game") renderTask();
+  else if (view === "catalog") renderCatalog();
 }
 
 function renderName() {
@@ -1022,7 +1023,9 @@ function nextTask() {
   if (view !== "game" || !G || TIMER().locked || !G.cur || !G.cur.done) return;
   G.cur.done = false;  // защита от двойного перехода
   G.idx++;
-  if (G.idx < G.tasks.length) { renderTask(); var sc = document.querySelector(".screen"); if (sc) sc.scrollTop = 0; } else renderResult();
+  if (G.idx < G.tasks.length) { renderTask(); var sc = document.querySelector(".screen"); if (sc) sc.scrollTop = 0; }
+  else if (G.check) { G = null; view = "catalog"; render(); }  // проверка заданий — назад к списку
+  else renderResult();
 }
 function renderResult() {
   var n = cnt(); n.games++; if (G.first === G.tasks.length) n.perfect = (n.perfect || 0) + 1;
@@ -1123,6 +1126,7 @@ function renderParents() {
     '<div class="setting"><span>⏱ Таймер: ' + tlabel + '</span><button class="s" type="button" data-timer>Настроить</button></div>' +
     '<div class="setting"><span>🔊 Озвучка</span><button class="s" type="button" data-voice>' + (c.voice ? "Выключить" : "Включить") + "</button></div>" +
     '<div class="setting"><span>✏️ Имя: ' + (c.name ? esc(c.name) : "не указано") + '</span><button class="s" type="button" data-rename>Изменить</button></div>' +
+    (ADMIN ? '<div class="setting"><span>📋 Все задания (проверка)</span><button class="s" type="button" data-cat="">Открыть</button></div>' : "") +
     (ADMIN ? '<div class="setting"><span>🎓 Выпускной (проверка)</span><button class="s" type="button" data-gradpreview>Показать</button></div>' : "") +
     '<div class="setting"><span>🗑 Начать заново</span><button class="s" type="button" data-reset>Сбросить</button></div></div>' +
     '<p class="muted wide">Сложность подстраивается сама по каждой теме. Хвалите за старание — это важнее правильных ответов 💛</p>' +
@@ -1187,7 +1191,46 @@ $app.addEventListener("click", function (e) {
   if ("diploma" in ds) { sendDiploma(); return; }
   if (ds.gift !== undefined) { var url = new URL(D.gifts[+ds.gift], location.href).href; try { tg.openLink(url); } catch (e) { window.open(url, "_blank"); } return; }
   if ("gradpreview" in ds) { renderGraduation(); return; }
+  if (ds.cat !== undefined) { catBlock = ds.cat || null; view = "catalog"; render(); var s2 = document.querySelector(".screen"); if (s2) s2.scrollTop = 0; return; }
+  if (ds.checktask) { checkGame(ds.checktask); return; }
 });
+
+/* ---------- админ: все задания по темам (проверка) ---------- */
+var catBlock = null;
+var MECH = { order: "по порядку", match: "найди пару", parts: "выбери всё", quiz: "выбор ответа" };
+function renderCatalog() {
+  var html;
+  if (!catBlock) {
+    html = Object.keys(D.blocks).map(function (b) {
+      var n = (BY_BLOCK[b] || []).length;
+      return '<div class="setting"><span>' + esc(D.blocks[b]) + ' <small class="muted">· ' + n + '</small></span><button class="s" type="button" data-cat="' + b + '">Открыть</button></div>';
+    }).join("");
+  } else {
+    var list = (BY_BLOCK[catBlock] || []).slice().sort(function (a, b) { return a.l - b.l || (a.id < b.id ? -1 : 1); });
+    html = '<div class="setting"><span><b>' + esc(D.blocks[catBlock]) + '</b></span><button class="s" type="button" data-checktask="block:' + catBlock + '">Пройти все подряд</button></div>' +
+      list.map(function (t) {
+        return '<div class="setting"><span style="font-size:15px"><small class="muted">ур. ' + t.l + " · " + esc(MECH[t.m] || t.m) + "</small><br>" + esc(t.q) + '</span><button class="s" type="button" data-checktask="' + t.id + '">▶</button></div>';
+      }).join("") +
+      '<button class="btn-white" type="button" data-cat="">← Все темы</button>';
+  }
+  $app.innerHTML = '<div class="screen"><div class="top"><h1 style="font-size:28px">Все задания</h1><span class="pill num">' + D.tasks.length + '</span></div>' +
+    '<p class="muted">Проверка для админа: любое задание сразу, без звёзд и без лимита.</p><div class="card">' + html + "</div></div>" + tabbar();
+}
+// Задание из списка (или вся тема подряд): звёзды и статистика не меняются.
+function checkGame(key) {
+  var list;
+  if (key.indexOf("block:") === 0) {
+    list = (BY_BLOCK[key.slice(6)] || []).slice().sort(function (a, b) { return a.l - b.l || (a.id < b.id ? -1 : 1); });
+  } else {
+    var t0 = D.tasks.filter(function (t) { return t.id === key; })[0], same = BY_BLOCK[t0.b].slice().sort(function (a, b) { return a.l - b.l || (a.id < b.id ? -1 : 1); });
+    list = same.slice(same.indexOf(t0));  // с выбранного и дальше по теме
+  }
+  var replay = {}; list.forEach(function (_, i) { replay[i] = true; });
+  G = { tasks: list, idx: 0, marks: [], stars: 0, first: 0, starsBefore: core().stars, replay: replay, check: true };
+  view = "game";
+  renderTask(true);
+  if (!list[0].sh) playAfter(list[0].qa);
+}
 if (tg && tg.BackButton) tg.BackButton.onClick(function () { if (view !== "game") { view = "home"; render(); } });
 
 /* ---------- запуск ---------- */
