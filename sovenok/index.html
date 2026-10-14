@@ -762,7 +762,7 @@ function renderMap() {
   function pos(i) { return { x: i % 2 ? 72 : 28, y: H - 110 - i * STEP }; }
   var items = D.islands.map(function (x, i) {
     var st = i < cur ? "done" : i === cur ? "now" : "closed", p = pos(i);
-    return '<div class="isle ' + st + '" style="left:' + p.x + '%;top:' + p.y + 'px">' + img(D.ui.islands[i], "i") +
+    return '<div class="isle ' + st + '"' + (ADMIN ? ' data-isle="' + i + '"' : "") + ' style="' + (ADMIN ? "cursor:pointer;" : "") + 'left:' + p.x + '%;top:' + p.y + 'px">' + img(D.ui.islands[i], "i") +
       (st === "now" ? '<img class="owlmark" src="' + M("flying") + '" alt="">' : "") +
       "<b>" + esc(stripEmoji(x[1])) + "</b><small>" + (st === "done" ? "✓ пройден" : st === "now" ? "ты здесь" : "нужно " + x[0] + " ⭐") + "</small></div>";
   }).join("");
@@ -1159,6 +1159,15 @@ $app.addEventListener("click", function (e) {
     return;
   }
   if (e.target.closest("[data-ranknow]")) { playNamed(D.rankNow[rankIdx()]); return; }
+  var isle = ADMIN && e.target.closest("[data-isle]");
+  if (isle) {
+    // Админ: перелететь на любой остров (звёзд становится ровно на этот остров).
+    var ii = +isle.dataset.isle, need = D.islands[ii][0];
+    var l = layer("<h3>Перелететь на остров «" + esc(stripEmoji(D.islands[ii][1])) + "»?</h3><p>Для проверки: звёзд станет " + need + ". Это меняет только ваш прогресс.</p>" +
+      '<button class="btn b-violet" type="button" data-yes style="font-size:20px">Перелететь</button><button class="btn-white" type="button" data-close>Отмена</button>');
+    l.querySelector("[data-yes]").onclick = function () { core().stars = need; save("core"); l.remove(); render(); };
+    return;
+  }
   var el = e.target.closest("button"); if (!el || el.disabled) return;
   var ds = el.dataset;
   if (ds.go) { if (view === "game") return; view = ds.go; render(); return; }
