@@ -313,7 +313,7 @@ img { display: block; max-width: 100%; }
 </head>
 <body>
 <div id="app"><div class="loading">Совёнок Тим просыпается…</div></div>
-<script src="data.js"></script>
+<script src="data.js?v=7e7de670"></script>
 <script>
 (function () {
 "use strict";
@@ -390,15 +390,20 @@ function sha256(s) {
 }
 // Кнопка под полем ввода (reply-клавиатура) не передаёт игре, кто её открыл, —
 // поэтому бот кладёт админу метку в адрес: ?a=<хэш>. Кнопка «Играть» передаёт пользователя.
-var ADMIN = (function () {
+// Запасной путь — код проверки во «Взрослым»: он сохраняется в облаке Telegram (core.adm).
+var TG_ID = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) || null;
+function detectAdmin() {
   try {
     if (!D.admins) return false;
     var a = new URLSearchParams(location.search).get("a");
     if (a && D.admins.indexOf(a) >= 0) return true;
-    var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
-    return !!(u && u.id && D.admins.indexOf(sha256("tim:" + u.id)) >= 0);
+    if (TG_ID && D.admins.indexOf(sha256("tim:" + TG_ID)) >= 0) return true;
+    var adm = (S.core && S.core.adm) || lsGetRaw("adm");
+    return !!(adm && D.adminCodes && D.adminCodes.indexOf(adm) >= 0);
   } catch (e) { return false; }
-})();
+}
+function lsGetRaw(k) { try { return localStorage.getItem("tim_" + k); } catch (e) { return null; } }
+var ADMIN = detectAdmin();
 // Игр в день; у админа — без ограничений.
 function perDay() { return ADMIN ? 9999 : core().perDay || D.perDay; }
 
@@ -714,6 +719,7 @@ function tabbar() {
   }).join("") + "</nav>";
 }
 function render() {
+  if (!ADMIN) ADMIN = detectAdmin();  // облако с кодом проверки могло загрузиться позже
   if (tg && tg.BackButton) { if (view === "map" || view === "parents" || view === "awards" || view === "catalog") tg.BackButton.show(); else tg.BackButton.hide(); }
   if (!core().asked) return renderName();
   if (view === "home") renderHome();
@@ -1132,9 +1138,11 @@ function renderParents() {
     '<div class="setting"><span>⏱ Таймер: ' + tlabel + '</span><button class="s" type="button" data-timer>Настроить</button></div>' +
     '<div class="setting"><span>🔊 Озвучка</span><button class="s" type="button" data-voice>' + (c.voice ? "Выключить" : "Включить") + "</button></div>" +
     '<div class="setting"><span>✏️ Имя: ' + (c.name ? esc(c.name) : "не указано") + '</span><button class="s" type="button" data-rename>Изменить</button></div>' +
+    (ADMIN ? "" : '<div class="setting"><span>🔑 Режим проверки</span><button class="s" type="button" data-admcode>Ввести код</button></div>') +
     (ADMIN ? '<div class="setting"><span>📋 Все задания (проверка)</span><button class="s" type="button" data-cat="">Открыть</button></div>' : "") +
     (ADMIN ? '<div class="setting"><span>🎓 Выпускной (проверка)</span><button class="s" type="button" data-gradpreview>Показать</button></div>' : "") +
     '<div class="setting"><span>🗑 Начать заново</span><button class="s" type="button" data-reset>Сбросить</button></div></div>' +
+    '<p class="muted wide" style="font-size:12px">Версия ' + esc(D.build || "?") + " · ID " + (TG_ID || "нет") + " · проверка: " + (ADMIN ? "включена" : "выключена") + "</p>" +
     '<p class="muted wide">Сложность подстраивается сама по каждой теме. Хвалите за старание — это важнее правильных ответов 💛</p>' +
     "</div></div>" + tabbar();
 }
@@ -1208,6 +1216,20 @@ $app.addEventListener("click", function (e) {
   if ("gradpreview" in ds) { renderGraduation(); return; }
   if (ds.cat !== undefined) { catBlock = ds.cat || null; view = "catalog"; render(); var s2 = document.querySelector(".screen"); if (s2) s2.scrollTop = 0; return; }
   if (ds.checktask) { checkGame(ds.checktask); return; }
+  if ("admcode" in ds) {
+    var lc = layer('<h3>Код проверки</h3><p>Включает режим проверки: все задания, карта и без лимита игр.</p>' +
+      '<input class="name-input" type="text" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Код" data-codein style="width:100%;box-sizing:border-box;padding:12px;border:2px solid rgba(110,90,200,.3);border-radius:16px;text-align:center;font-size:24px;font-weight:800;margin:10px 0">' +
+      '<button class="btn b-violet" type="button" data-yes style="font-size:20px">Включить</button><button class="btn-white" type="button" data-close>Отмена</button>');
+    var inp = lc.querySelector("[data-codein]"); inp.focus();
+    lc.querySelector("[data-yes]").onclick = function () {
+      var h = sha256("code:" + inp.value.trim());
+      if (D.adminCodes && D.adminCodes.indexOf(h) >= 0) {
+        core().adm = h; save("core"); try { localStorage.setItem("tim_adm", h); } catch (e) {}
+        ADMIN = true; lc.remove(); render();
+      } else { inp.value = ""; inp.placeholder = "Неверный код"; haptic("error"); }
+    };
+    return;
+  }
 });
 
 /* ---------- админ: все задания по темам (проверка) ---------- */
