@@ -319,7 +319,7 @@ img { display: block; max-width: 100%; }
 </head>
 <body>
 <div id="app"><div class="loading">Совёнок Тим просыпается…</div></div>
-<script src="data.js?v=08d15aff"></script>
+<script src="data.js?v=478a29ae"></script>
 <script>
 (function () {
 "use strict";
@@ -722,10 +722,21 @@ function sendDiploma() {
   var c = core();
   var data = { t: "diploma", name: c.name || "", stars: c.stars, medals: Object.keys(medalsGot()).length,
     topics: masteredTopics().map(function (b) { return D.blocks[b]; }) };
-  // Отправить данные боту можно, только если игра открыта кнопкой «🦉 Открыть игру» внизу чата.
+  // Игра открыта кнопкой «🦉 Открыть игру» внизу чата — данные уходят боту напрямую.
   var viaKeyboard = tg && tg.sendData && tg.initDataUnsafe && !tg.initDataUnsafe.query_id && tg.initData;
   if (viaKeyboard) { try { tg.sendData(JSON.stringify(data)); return; } catch (e) {} }
-  layer("<h3>Как получить диплом</h3><p>Закройте игру и откройте её кнопкой <b>«🦉 Открыть игру»</b> внизу чата с ботом (не кнопкой «Играть» слева). Потом снова нажмите «Получить диплом» — бот пришлёт его в чат.</p><button class=\"btn-white\" type=\"button\" data-close>Понятно</button>");
+  // Иначе — открываем чат с ботом по ссылке /start d_<данные>: бот сразу пришлёт диплом.
+  var url = "https://t.me/" + D.bot + "?start=" + diplomaPayload(data);
+  try { tg.openTelegramLink(url); } catch (e) { location.href = url; }
+  layer("<h3>Диплом летит в чат! 🎓</h3><p>Совёнок Тим пришлёт его в чат с ботом: картинку и файл для печати.</p><button class=\"btn b-violet\" type=\"button\" data-close>Ура!</button>");
+}
+// Ссылка /start вмещает до 64 символов: «звёзды.награды.темы(битами).имя» в base64url.
+function diplomaPayload(data) {
+  var mask = 0; Object.keys(D.blocks).forEach(function (b, i) { if (data.topics.indexOf(D.blocks[b]) >= 0) mask |= 1 << i; });
+  function b64(s) { return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+  var head = data.stars + "." + data.medals + "." + mask + ".", name = data.name;
+  while (name && b64(head + name).length > 60) name = name.slice(0, -1);
+  return "d_" + b64(head + name);
 }
 
 /* ---------- экраны ---------- */
