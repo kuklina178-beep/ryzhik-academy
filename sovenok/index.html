@@ -4,10 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Совёнок Тим</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap">
+<!-- шрифты лежат рядом с игрой: Google Fonts из России часто недоступны и тормозят запуск -->
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="preload" href="fonts/nunito-cyrillic-800-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 /* Стиль — как у Академии Рыжика: светлый градиент с цветными пятнами и
    точечной сеткой, белые «парящие» карточки, яркие градиентные кнопки. */
@@ -319,7 +318,8 @@ img { display: block; max-width: 100%; }
 </head>
 <body>
 <div id="app"><div class="loading">Совёнок Тим просыпается…</div></div>
-<script src="data.js?v=4e606c7e"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="data.js?v=df7dfc1c"></script>
 <script>
 (function () {
 "use strict";
@@ -711,7 +711,7 @@ function renderGraduation() {
   view = "graduation";
   $app.innerHTML = '<div class="screen celebrate" style="position:relative;overflow-y:auto">' + confetti() +
     '<img class="big" src="' + M("party_hat") + '" alt=""><h2>Поздравляем' + (c.name ? ", " + esc(c.name) : "") + "!</h2>" +
-    '<p class="muted" style="font-size:17px;max-width:30ch">Ты пролетел все острова и закончил Школу Мудрых Сов. Теперь ты готов к школе!</p>' +
+    '<p class="muted" style="font-size:17px;max-width:30ch">Все острова пройдены, Школа Мудрых Сов окончена! Теперь можно смело идти в школу!</p>' +
     '<span class="rank"><img src="' + IMG("25_medals/10_galaxy") + '" alt="">' + esc(rankName(D.islands.length - 1)) + "</span>" +
     diplomaHtml() +
     '<button class="btn b-violet" type="button" data-diploma>Получить диплом в чат<small>картинка и PDF для печати</small></button>' +
@@ -773,7 +773,7 @@ function renderName() {
 function renderHome() {
   var c = core(), isl = island(c.stars), nx = nextIsland(c.stars), used = gamesToday(), left = perDay() - used;
   var dots = ""; if (!ADMIN) for (var i = 0; i < perDay(); i++) dots += "<i" + (i < used ? "" : ' class="off"') + "></i>";
-  var bubble = left > 0 ? (nx ? "Летим к острову «" + stripEmoji(nx.name) + "»! Собирай звёзды!" : "Ты прошёл все острова! Ты готов к школе!") : "На сегодня игры закончились. Приходи завтра!";
+  var bubble = left > 0 ? (nx ? "Летим к острову «" + stripEmoji(nx.name) + "»! Собирай звёзды!" : "Все острова пройдены! Можно смело идти в школу!") : "На сегодня игры закончились. Приходи завтра!";
   var streak = c.streak > 1 && c.last >= dayNum() - 1 ? '<span class="pill num"><img src="' + IMG("03_ui/16_flame") + '" alt="">' + c.streak + "</span>" : "";
   $app.innerHTML = '<div class="screen">' +
     '<div class="top"><span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + c.stars + "</span>" + streak +
@@ -1026,7 +1026,7 @@ function finishInteractive() {
 function askHint(t, head) {
   if (!t.h) { sayHtml("<b>" + head + "</b> Попробуй ещё раз!", "hint_point", false); play(D.say.retry); return; }
   sayHtml("<b>" + head + "</b> Нужна подсказка?" +
-    '<span class="hint-btns"><button type="button" data-hint="yes">💡 Да</button><button type="button" data-hint="no">Нет, я сам!</button></span>', "thinking", false);
+    '<span class="hint-btns"><button type="button" data-hint="yes">💡 Да</button><button type="button" data-hint="no">Нет, попробую!</button></span>', "thinking", false);
   play(D.say.hint_ask);
 }
 function sayHtml(text, pose, good) {
@@ -1269,7 +1269,7 @@ $app.addEventListener("click", function (e) {
     return;
   }
   if (ds.hint === "yes") { sayHtml("<b>Подсказка:</b> " + esc(T.h), "hint_point", false); play(T.ha); return; }
-  if (ds.hint === "no") { sayHtml("<b>Хорошо!</b> Попробуй ещё раз сам.", "jump_joy", false); play(D.say.try_again); return; }
+  if (ds.hint === "no") { sayHtml("<b>Хорошо!</b> Попробуй ещё раз.", "jump_joy", false); play(D.say.try_again); return; }
   if ("quit" in ds) {
     var l = layer("<h3>Выйти из игры?</h3><p>Звёзды за решённые задания сохранятся.</p><button class=\"btn b-coral\" type=\"button\" data-yes style=\"font-size:20px\">Выйти</button><button class=\"btn-white\" type=\"button\" data-close>Играть дальше</button>");
     l.querySelector("[data-yes]").onclick = function () { clearTimeout(G && G.memTimer); G = null; view = "home"; l.remove(); render(); };
