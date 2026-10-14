@@ -198,6 +198,12 @@ img { display: block; max-width: 100%; }
 .back-fab span { font-weight: 900; font-size: 13px; color: #3f9a2a; line-height: 1; }
 .back-fab:active { transform: scale(.94); }
 .screen:has(.back-fab) { padding-bottom: 110px; }
+.sort-item { display: grid; justify-items: center; gap: 6px; text-align: center; }
+.sort-item .tile-img.main { width: 180px; height: 180px; }
+.sort-item b { font-family: var(--display); font-size: 24px; }
+.sort-done { display: grid; gap: 10px; }
+.sort-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.sort-row .tile-img { width: 54px; height: 54px; }
 .why-btns button { background: #fff; color: var(--violet-deep); box-shadow: var(--sh-s); }
 .why-btns button[data-next] { background: linear-gradient(155deg, var(--violet), var(--violet-deep)); color: #fff; }
 .hint-btns button[data-hint="yes"] { background: linear-gradient(155deg, var(--sun), var(--sun-deep)); color: #fff; }
@@ -313,7 +319,7 @@ img { display: block; max-width: 100%; }
 </head>
 <body>
 <div id="app"><div class="loading">Совёнок Тим просыпается…</div></div>
-<script src="data.js?v=61773743"></script>
+<script src="data.js?v=1370a2dc"></script>
 <script>
 (function () {
 "use strict";
@@ -326,7 +332,7 @@ D.ui.mascot.forEach(function (k) { MASCOT[k.split("/")[1].replace(/^\d+_/, "")] 
 var M = function (pose) { return IMG(MASCOT[pose] || MASCOT.wave); };
 var TASK_INDEX = {};
 D.tasks.forEach(function (t, i) { TASK_INDEX[t.id] = i; });
-var INTERACTIVE = { order: 1, match: 1, parts: 1 };
+var INTERACTIVE = { order: 1, match: 1, parts: 1, sort: 1 };
 
 /* ---------- время (по Москве) ---------- */
 var DAY = 86400000;
@@ -501,6 +507,9 @@ function neighboursOk(seq, strict) {
   }
   return true;
 }
+// Сложность растёт по островам: уровень темы (подстраивается под ребёнка) держим в рамках острова.
+var ISLE_FLOOR = [1, 1, 1, 2, 2, 2, 3, 3], ISLE_CAP = [1, 1, 2, 3, 3, 3, 3, 3];
+function isleLevel(x) { var i = island(core().stars).idx; return Math.min(ISLE_CAP[i], Math.max(ISLE_FLOOR[i], x)); }
 function buildSession() {
   var n = D.perSession, lv = core().lv, seen = seenSet();
   var others = shuffle(Object.keys(BY_BLOCK).filter(function (b) { return D.core.indexOf(b) < 0; }));
@@ -510,11 +519,11 @@ function buildSession() {
   var inter = D.tasks.filter(function (t) { return INTERACTIVE[t.m]; });
   for (var i = 0; i < 2; i++) {
     var avg = 1 + Math.round(Object.keys(lv).reduce(function (s, b) { return s + lv[b][0] - 1; }, 0) / Math.max(1, Object.keys(lv).length));
-    var t = pickFrom(inter, avg, seen, taken);
+    var t = pickFrom(inter, isleLevel(avg), seen, taken);
     if (t) { chosen.push(t); taken[t.id] = 1; }
   }
   plan.slice(0, n - chosen.length).forEach(function (b) {
-    var t = pickFrom((BY_BLOCK[b] || []).filter(function (x) { return !INTERACTIVE[x.m]; }), (lv[b] || [1])[0], seen, taken);
+    var t = pickFrom((BY_BLOCK[b] || []).filter(function (x) { return !INTERACTIVE[x.m]; }), isleLevel((lv[b] || [1])[0]), seen, taken);
     if (t) { chosen.push(t); taken[t.id] = 1; }
   });
   for (var strict = 1; strict >= 0; strict--) for (var k = 0; k < 300; k++) { shuffle(chosen); if (neighboursOk(chosen, !!strict)) return chosen; }
@@ -809,7 +818,7 @@ function startGame() {
   view = "game";
   playNamed(D.say.start);
   renderTask(true);
-  if (G.tasks[0] && !G.tasks[0].sh) playAfter(G.tasks[0].qa);
+  if (G.tasks[0] && !G.tasks[0].sh) sayTask(G.tasks[0]);
 }
 function picHtml(t, phase) {
   if (phase === "remember") {
@@ -845,13 +854,15 @@ function renderTask(silent) {
     if (t.m === "order") { G.cur.placed = 0; G.cur.shuffled = shuffle(t.items.map(function (_, i) { return i; })); }
     if (t.m === "match") { G.cur.right = shuffle(t.pairs.map(function (_, i) { return i; })); G.cur.sel = null; G.cur.paired = {}; }
     if (t.m === "parts") { G.cur.picked = {}; }
+    if (t.m === "sort") { G.cur.k = 0; G.cur.ord = shuffle(t.items.map(function (_, i) { return i; })); }
   }
-  var st = G.cur, lv = (core().lv[t.b] || [1])[0];
+  var st = G.cur, lv = t.l || 1;  // уровень самого задания
   var pebbles = G.tasks.map(function (_, i) { return "<i" + (G.marks[i] ? ' class="' + G.marks[i] + '"' : i === G.idx ? ' class="now"' : "") + "></i>"; }).join("");
   var body = "";
   if (t.m === "order") body = orderHtml(t, st);
   else if (t.m === "match") body = matchHtml(t, st);
   else if (t.m === "parts") body = partsHtml(t, st);
+  else if (t.m === "sort") body = sortHtml(t, st);
   else if (st.phase === "ask") {
     var lbls = t.o, cls = t.nolabel ? (t.o.length === 3 ? "cols-3" : "cols-2") : answersClass(lbls), rowMode = cls === "";
     body = '<div class="answers ' + cls + '">' + t.o.map(function (o, i) {
@@ -863,7 +874,7 @@ function renderTask(silent) {
     '<div class="game-top"><button class="icon-btn" type="button" data-quit aria-label="Выйти из игры" style="font-weight:900;font-size:18px">✕</button><div class="pebbles">' + pebbles + "</div>" + pillHtml() + soundBtn() +
     '<span class="pill num"><img src="' + IMG("03_ui/14_star") + '" alt="">' + (G.starsBefore + G.stars) + "</span></div>" +
     '<div class="q"><span class="badge">' + (topicImg ? '<img src="' + IMG(topicImg) + '" alt="">' : "") + esc(D.blocks[t.b]) + " · ур. " + lv + "</span>" +
-    (t.m === "order" || t.m === "match" ? "" : picHtml(t, st.phase)) +
+    (t.m === "order" || t.m === "match" || t.m === "sort" ? "" : picHtml(t, st.phase)) +
     (st.phase === "ask" ? '<div class="qtext">' + esc(t.q) + '</div><button class="speak" type="button" data-speak><i><img src="' + IMG("03_ui/23_speaker") + '" alt=""></i>Послушать ещё раз</button>' : "") +
     "</div>" + body + '<div id="say"></div>' +
     // «Назад» — плавающая кнопка внизу слева, видна без прокрутки
@@ -874,7 +885,12 @@ function renderTask(silent) {
     if (!silent) play(D.say.remember);
     clearTimeout(G.memTimer);
     G.memTimer = setTimeout(function () { st.phase = "ask"; renderTask(true); play(D.say.hidden); playAfter(t.qa); }, (t.ss || 5) * 1000);
-  } else if (!silent) playAfter(t.qa);
+  } else if (!silent) sayTask(t);
+}
+// Вопрос голосом; в «Разложи» — ещё и первый предмет.
+function sayTask(t) {
+  playAfter(t.qa);
+  if (t.m === "sort" && G && G.cur && t.ia) playAfter(t.ia[G.cur.ord[G.cur.k || 0]]);
 }
 
 /* --- по порядку --- */
@@ -938,6 +954,34 @@ function partsHtml(t, st) {
     return ansButton(i, it[0], it[1], { attr: "part", cls: c, mark: st.picked[i] || (st.done && it[2]) ? "✓" : "" });
   }).join("");
   return '<div class="answers ' + cls + '">' + cards + '</div><button class="btn b-leaf" type="button" data-partsdone' + (st.done ? " hidden" : "") + ">Готово</button>";
+}
+/* --- разложи по корзинкам: живое / неживое, съедобное / несъедобное… --- */
+function sortHtml(t, st) {
+  var n = t.items.length;
+  if (st.k >= n) {
+    // итог: что в какую корзинку попало
+    return '<div class="sort-done">' + t.cats.map(function (c, ci) {
+      return '<div class="card"><b>' + esc(c[0]) + '</b><div class="sort-row">' + t.items.filter(function (it) { return it[2] === ci; })
+        .map(function (it) { return img(it[1]); }).join("") + "</div></div>";
+    }).join("") + "</div>";
+  }
+  var it = t.items[st.ord[st.k]];
+  return '<div class="card sort-item" data-sayitem>' + img(it[1], "main") + "<b>" + esc(it[0]) + '</b><small class="muted">' + (st.k + 1) + " из " + n + "</small></div>" +
+    '<div class="answers cols-2">' + t.cats.map(function (c, ci) { return ansButton(ci, c[0], c[1], { attr: "srt" }); }).join("") + "</div>";
+}
+function tapSort(ci, btn) {
+  var t = G.tasks[G.idx], st = G.cur;
+  if (st.done || st.k >= t.items.length) return;
+  if (t.items[st.ord[st.k]][2] === ci) {
+    haptic("success"); st.k++;
+    renderTask(true);
+    if (st.k >= t.items.length) { finishInteractive(); return; }
+    playAfter(t.ia && t.ia[st.ord[st.k]]);
+  } else {
+    st.mistakes++; haptic("error");
+    btn.classList.add("wrong"); setTimeout(function () { btn.classList.remove("wrong"); }, 450);
+    if (!st.hinted) { st.hinted = true; askHint(t, "Не сюда!"); }
+  }
 }
 function tapPart(i) { var st = G.cur; if (st.done) return; if (st.picked[i]) delete st.picked[i]; else st.picked[i] = 1; renderTask(true); }
 function partsDone() {
@@ -1027,7 +1071,7 @@ function finishTask(result, stars, text, pose, good) {
     G.newMedals = (G.newMedals || []).concat(checkMedals());
     save("core"); save("seen"); save("stats");
   }
-  Array.prototype.forEach.call(document.querySelectorAll("[data-ans],[data-ord],[data-ml],[data-mr],[data-part]"), function (b) { b.disabled = true; });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-ans],[data-ord],[data-ml],[data-mr],[data-part],[data-srt]"), function (b) { b.disabled = true; });
   // «Почему?» — совёнок объяснит ответ; пока ребёнок слушает, следующее задание ждёт.
   sayHtml(text + (t.w ? whyBtns() : ""), pose, good);
   var say = document.getElementById("say"); if (say && say.scrollIntoView) say.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -1175,6 +1219,7 @@ $app.addEventListener("click", function (e) {
     if (mm) play(medalsGot()[mm[0]] ? mm[5] : mm[6]);
     return;
   }
+  if (e.target.closest("[data-sayitem]") && G && G.cur) { var Ts = G.tasks[G.idx]; play(Ts.ia && Ts.ia[G.cur.ord[G.cur.k]]); return; }
   if (e.target.closest("[data-ranknow]")) { playNamed(D.rankNow[rankIdx()]); return; }
   var isle = ADMIN && e.target.closest("[data-isle]");
   if (isle) {
@@ -1191,7 +1236,7 @@ $app.addEventListener("click", function (e) {
   if ("play" in ds) { startGame(); return; }
   if ("timer" in ds) { openTimer(); return; }
   if ("speak" in ds) { play(G && G.tasks[G.idx].qa); return; }
-  if (G && TIMER().locked && (ds.ans || ds.ord || ds.ml || ds.mr || ds.part || "partsdone" in ds)) { showLock(); return; }
+  if (G && TIMER().locked && (ds.ans || ds.ord || ds.ml || ds.mr || ds.part || ds.srt || "partsdone" in ds)) { showLock(); return; }
   var T = G && G.tasks[G.idx];
   if (ds.ans !== undefined) { withLead(T.oa && T.oa[+ds.ans], function () { answer(+ds.ans, el); }); return; }
   if (ds.ord !== undefined) { withLead(T.ia && T.ia[+ds.ord], function () { tapOrder(+ds.ord, el); }); return; }
@@ -1199,6 +1244,7 @@ $app.addEventListener("click", function (e) {
   if (ds.mr !== undefined) { withLead(T.pa && T.pa[+ds.mr][1], function () { tapMatchRight(+ds.mr, el); }); return; }
   if (ds.part !== undefined) { withLead(T.ia && T.ia[+ds.part], function () { tapPart(+ds.part); }); return; }
   if ("partsdone" in ds) { partsDone(); return; }
+  if (ds.srt !== undefined) { withLead(T.ca && T.ca[+ds.srt], function () { tapSort(+ds.srt, el); }); return; }
   if ("why" in ds && T && T.w) { G.waitWhy = true; sayHtml("<b>Почему?</b> " + esc(T.w) + whyBtns(true), "reading", false); play(T.wa); return; }
   if ("next" in ds) { stopVoice(); nextTask(); return; }
   if ("back" in ds && G && G.idx > 0) {
@@ -1243,7 +1289,7 @@ $app.addEventListener("click", function (e) {
 
 /* ---------- админ: все задания по темам (проверка) ---------- */
 var catBlock = null;
-var MECH = { order: "по порядку", match: "найди пару", parts: "выбери всё", quiz: "выбор ответа" };
+var MECH = { order: "по порядку", match: "найди пару", parts: "выбери всё", sort: "разложи", quiz: "выбор ответа" };
 function renderCatalog() {
   var html;
   if (!catBlock) {
@@ -1275,7 +1321,7 @@ function checkGame(key) {
   G = { tasks: list, idx: 0, marks: [], stars: 0, first: 0, starsBefore: core().stars, replay: replay, check: true };
   view = "game";
   renderTask(true);
-  if (!list[0].sh) playAfter(list[0].qa);
+  if (!list[0].sh) sayTask(list[0]);
 }
 if (tg && tg.BackButton) tg.BackButton.onClick(function () { if (view !== "game") { view = "home"; render(); } });
 
