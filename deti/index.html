@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мама и ИИ — боты для детей</title>
+<meta name="description" content="Три бота для детей от мамы-создательницы: сказки с именем ребёнка, буквы с лисёнком Рыжиком и подготовка к школе с Совёнком Тимом.">
+<meta property="og:title" content="Мама и ИИ — боты для детей">
+<meta property="og:description" content="Сказки с именем ребёнка, буквы с Рыжиком и подготовка к школе с Тимом. Попробовать бесплатно.">
+<meta property="og:image" content="img/ryzhik.webp">
+<style>
+  :root {
+    --bg: #FFF6EC;
+    --text: #2B2340;
+    --muted: #6E6478;
+    --card: #FFFFFF;
+    --shadow: 0 10px 30px rgba(120, 70, 20, .12);
+    --skazka: #2E2A63;
+    --ryzhik: #E8692A;
+    --tim: #24508F;
+    --accent: #FFD24A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    color: var(--text);
+    background: radial-gradient(circle at 50% -10%, #FFE2C4 0, var(--bg) 55%) fixed, var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 480px; margin: 0 auto; padding: 32px 16px 40px; }
+
+  header { text-align: center; margin-bottom: 26px; }
+  .avatar {
+    width: 112px; height: 112px; border-radius: 50%;
+    margin: 0 auto 14px; overflow: hidden;
+    border: 4px solid #fff; box-shadow: var(--shadow);
+    background: linear-gradient(135deg, #FFB37A, #F08A4B);
+    display: grid; place-items: center; font-size: 52px;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  h1 { font-size: 24px; line-height: 1.2; margin: 0 0 8px; font-weight: 800; }
+  .lead { margin: 0 auto; max-width: 360px; color: var(--muted); font-size: 16px; line-height: 1.45; }
+
+  .card {
+    display: flex; gap: 14px; align-items: center;
+    background: var(--card); border-radius: 22px; padding: 14px;
+    margin-bottom: 14px; box-shadow: var(--shadow);
+    border-top: 5px solid var(--c);
+  }
+  .card img { width: 92px; height: 92px; border-radius: 16px; flex: none; object-fit: cover; }
+  .info { flex: 1; min-width: 0; }
+  .info h2 { font-size: 18px; margin: 0 0 4px; color: var(--c); }
+  .info p { margin: 0 0 8px; font-size: 14px; line-height: 1.4; color: var(--muted); }
+  .free {
+    display: inline-block; font-size: 12px; font-weight: 700;
+    background: var(--accent); color: var(--text);
+    padding: 3px 9px; border-radius: 999px; margin-bottom: 10px;
+  }
+  .btn {
+    display: block; text-align: center; text-decoration: none;
+    background: var(--c); color: #fff; font-weight: 700; font-size: 15px;
+    padding: 11px 12px; border-radius: 14px;
+    transition: transform .15s ease, filter .15s ease;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: scale(.97); }
+  .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .skazka { --c: var(--skazka); }
+  .ryzhik { --c: var(--ryzhik); }
+  .tim    { --c: var(--tim); }
+
+  footer { text-align: center; color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 22px; }
+  footer a { color: inherit; }
+
+  @media (max-width: 360px) {
+    .card img { width: 72px; height: 72px; }
+    h1 { font-size: 21px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <!-- Ваше фото: положите файл avatar.jpg в папку img — пока его нет, показывается лисёнок -->
+    <div class="avatar"><img src="img/avatar.jpg" alt="" onerror="this.parentNode.textContent='🦊'"></div>
+    <h1>Мама, которая растит ребёнка с ИИ</h1>
+    <p class="lead">Сделала три бота для своего сына — теперь они помогают и вашему. Всё работает прямо в Телеграме.</p>
+  </header>
+
+  <section class="card skazka">
+    <img src="img/skazka.webp" alt="Лисёнок читает книгу">
+    <div class="info">
+      <h2>Сказочный конструктор</h2>
+      <p>Сказка, где главный герой — ваш ребёнок, с его именем. Готова за минуту, можно послушать голосом.</p>
+      <span class="free">3 сказки бесплатно</span>
+      <a class="btn" href="https://t.me/Konstryktor_Skazok_bot?start=site">Получить сказку</a>
+    </div>
+  </section>
+
+  <section class="card ryzhik">
+    <img src="img/ryzhik.webp" alt="Лисёнок Рыжик">
+    <div class="info">
+      <h2>Академия Рыжика</h2>
+      <p>Буквы, цифры и звуки короткими уроками с лисёнком. Для детей около 5 лет, без слёз и прописей.</p>
+      <span class="free">Демо-урок бесплатно</span>
+      <a class="btn" href="https://t.me/AcademiyaRizhika_bot?start=site">Попробовать урок</a>
+    </div>
+  </section>
+
+  <section class="card tim">
+    <img src="img/tim.webp" alt="Совёнок Тим">
+    <div class="info">
+      <h2>Совёнок Тим</h2>
+      <p>Подготовка к школе для детей 5–7 лет: задания с картинками и голосом, отчёт для мамы.</p>
+      <span class="free">5 игр бесплатно</span>
+      <a class="btn" href="https://t.me/SovenokTim_bot?start=site">Начать играть</a>
+    </div>
+  </section>
+
+  <footer>
+    Кнопки открывают бота в Телеграме.<br>
+    Вопросы — пишите мне в директ Instagram.
+  </footer>
+</main>
+</body>
+</html>
