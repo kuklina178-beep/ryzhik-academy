@@ -553,6 +553,7 @@
   .gift-name{font-weight:800; font-size:.74rem; line-height:1.15; text-align:center;}
   .gift-sub{font-weight:700; font-size:.68rem; color:var(--ink-soft);}
   .gift-box{margin-top:10px; display:flex; flex-direction:column; align-items:center; gap:6px; animation:rankIn .55s ease .5s both;}
+  .gift-next{margin:12px auto 0; padding:6px 14px; border-radius:999px; background:var(--card, rgba(255,255,255,.7)); font-weight:700; font-size:.88rem; color:var(--ink-soft); width:max-content; max-width:100%; animation:rankIn .55s ease .5s both;}
   .gift-card-big{min-width:150px; box-shadow:0 0 0 3px rgba(22,200,230,.55), 0 18px 32px -16px rgba(91,77,255,.6);}
   .gift-card-big .gift-thumb{width:86px; height:122px;}
   .gift-card-big .gift-img.emoji-media{font-size:3rem;}
@@ -2438,7 +2439,7 @@ var ICONS = {
   // v5f: levelProgress persists dayDone/topicDone/mistakes/used-words per
   // level — leaving a level mid-way (🏠) and coming back resumes instead
   // of losing what was already done, per the user's explicit request.
-  function saveProgress(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({stars:state.stars, sound:state.sound, lettersOnlyMode:state.lettersOnlyMode, activeMode:state.activeMode, voiceName:state.voiceName, childName:state.childName, curDay:state.curDay, streak:state.streak, badgesShown:state.badgesShown, levelProgress:state.levelProgress, achievementsUnlocked:state.achievementsUnlocked, achProgress:state.achProgress, analyticsLog:state.analyticsLog, alphabetStats:state.alphabetStats, dailyStats:state.dailyStats, sessionLocked:state.sessionLocked, sessionEndsAt:state.sessionEndsAt, certificateShown:state.certificateShown, certBgBag:state.certBgBag, puzzlesGot:state.puzzlesGot})); }catch(e){} }
+  function saveProgress(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({stars:state.stars, sound:state.sound, lettersOnlyMode:state.lettersOnlyMode, activeMode:state.activeMode, voiceName:state.voiceName, childName:state.childName, curDay:state.curDay, streak:state.streak, badgesShown:state.badgesShown, levelProgress:state.levelProgress, achievementsUnlocked:state.achievementsUnlocked, achProgress:state.achProgress, analyticsLog:state.analyticsLog, alphabetStats:state.alphabetStats, dailyStats:state.dailyStats, sessionLocked:state.sessionLocked, sessionEndsAt:state.sessionEndsAt, certificateShown:state.certificateShown, certBgBag:state.certBgBag, giftPuzzles:state.giftPuzzles})); }catch(e){} }
 
   var saved = loadProgress();
   var state = {
@@ -2491,7 +2492,7 @@ var ICONS = {
     // между сессиями, не только пока открыта вкладка.
     certBgBag: saved.certBgBag || [],
     // подарки-пазлы: номера уровней (0..24), за которые пазл уже получен
-    puzzlesGot: saved.puzzlesGot || saved.friendsGot || [],
+    giftPuzzles: saved.giftPuzzles || [],   // номера полученных пазлов (0..4), подарок каждые 5 уровней
     sessionWarned: false,
     sessionEndNotified: false,
     // v15: достижения — ОТДЕЛЬНАЯ от STAR_BADGES система (там триггер —
@@ -4715,39 +4716,42 @@ var ICONS = {
     else renderCurrentRound();
   }
 
-  /* =================== ПАЗЛЫ (подарок за уровень) ===================
-   * За каждый пройденный уровень — цветной пазл формата А4: распечатать,
-   * разрезать по линиям и собирать. Сложность растёт с уровнем (4 → 20 деталей).
+  /* =================== ПАЗЛЫ (подарок каждые 5 уровней) ===================
+   * За уровни 5, 10, 15, 20 и 25 — цветной пазл формата А4: распечатать,
+   * разрезать по линиям и собирать. Сложность растёт: 6 → 9 → 12 → 16 → 20 деталей.
+   * Между подарками на экране уровня — подсказка «до следующего пазла N уровней».
    * Аналог раскрасок-подарков у «Совёнка Тима».
    * Файлы делает «Академия Рыжика/tools/build_puzzles.py» из картинок
-   * «Аудио и картинки/пазлы/01.png…25.png»: PDF (лист 1 — пазл с линиями разреза,
-   * лист 2 — образец) и миниатюру; он же переписывает строку PUZZLE_FILES ниже.
-   * Пока картинки нет — пазл в альбоме есть, но помечен «скоро».
-   * Промты для картинок — «Академия Рыжика/ПОДАРКИ — Пазлы.md». */
+   * «Аудио и картинки/пазлы/01 ….png … 05 ….png»: PDF (лист 1 — пазл с линиями
+   * разреза, лист 2 — образец) и миниатюру; он же переписывает строку PUZZLE_FILES.
+   * Пока картинки нет — пазл в альбоме есть, но помечен «скоро». */
   var PUZZLES = [
-    {name:'Солнечная полянка'}, {name:'Воздушные шары'}, {name:'Лесной пикник'}, {name:'Кораблик в море'},
-    {name:'Радуга над деревней'}, {name:'Полёт в космос'}, {name:'Подводный мир'}, {name:'Сказочный замок'},
-    {name:'Весёлый паровозик'}, {name:'Цирк зверят'}, {name:'Огород'}, {name:'Зимняя горка'},
-    {name:'В гостях у динозавров'}, {name:'Ферма'}, {name:'Город машинок'}, {name:'Остров сокровищ'},
-    {name:'Осенний лес'}, {name:'Рыжик-художник'}, {name:'Лесной концерт'}, {name:'Зоопарк'},
-    {name:'Кондитерская'}, {name:'Звёздная ночь'}, {name:'На пляже'}, {name:'Волшебная библиотека'},
-    {name:'Выпускной в Академии'}
+    {level:5,  name:'Солнечная полянка'},
+    {level:10, name:'Воздушные шары'},
+    {level:15, name:'Лесной пикник'},
+    {level:20, name:'Радуга над деревней'},
+    {level:25, name:'Полёт в космос'}
   ];
-  var PUZZLE_FILES = {}; // @@PUZZLE_FILES@@
+  var PUZZLE_FILES = {"0": {"pdf": "gifts/puzzle_01_b0218e01.pdf", "thumb": "img/ddf8f15b1739.webp", "pieces": 6}, "1": {"pdf": "gifts/puzzle_02_4fd44707.pdf", "thumb": "img/f4d9db59bae5.webp", "pieces": 9}, "2": {"pdf": "gifts/puzzle_03_87678283.pdf", "thumb": "img/a1adc7c22528.webp", "pieces": 12}, "3": {"pdf": "gifts/puzzle_04_69da1771.pdf", "thumb": "img/c2db41cd97d3.webp", "pieces": 16}, "4": {"pdf": "gifts/puzzle_05_3cf6c96d.pdf", "thumb": "img/098eccd61caa.webp", "pieces": 20}}; // @@PUZZLE_FILES@@
 
   // (столбцы, ряды) — должно совпадать с puzzle_grid() в tools/build_puzzles.py
-  function puzzleGrid(i){ var lv = i + 1;
-    if(lv <= 2) return [2,2]; if(lv <= 5) return [2,3]; if(lv <= 9) return [3,3];
-    if(lv <= 14) return [3,4]; if(lv <= 19) return [4,4]; return [4,5]; }
+  function puzzleGrid(i){ return [[2,3],[3,3],[3,4],[4,4],[4,5]][i] || [4,5]; }
+  function puzzleForLevel(day){ for(var i=0;i<PUZZLES.length;i++) if(PUZZLES[i].level === day) return i; return -1; }
+  function nextPuzzleAfter(day){ for(var i=0;i<PUZZLES.length;i++) if(PUZZLES[i].level > day) return i; return -1; }
+  function levelsWord(n){
+    if(n % 10 === 1 && n % 100 !== 11) return 'уровень';
+    if(n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14)) return 'уровня';
+    return 'уровней';
+  }
   function puzzlePieces(i){ var g = puzzleGrid(i); return g[0] * g[1]; }
   function piecesWord(n){
     if(n % 10 === 1 && n % 100 !== 11) return 'деталь';
     if(n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14)) return 'детали';
     return 'деталей';
   }
-  // Пазл получен, если уровень пройден: отмечаем при прохождении, а для тех,
+  // Пазл получен, если его уровень пройден: отмечаем при прохождении, а для тех,
   // кто прошёл уровни до появления подарков, — всё, что до текущего уровня.
-  function puzzleGot(i){ return state.puzzlesGot.indexOf(i) !== -1 || (i + 1) < state.curDay; }
+  function puzzleGot(i){ return state.giftPuzzles.indexOf(i) !== -1 || PUZZLES[i].level < state.curDay; }
   function puzzlesCount(){ var n = 0; for(var i=0;i<PUZZLES.length;i++) if(puzzleGot(i)) n++; return n; }
   function puzzleFile(i){ return PUZZLE_FILES[String(i)] || null; }
   function puzzleThumb(i, cls){ var f = puzzleFile(i); return mediaTag(f && f.thumb ? f.thumb : '🧩', cls); }
@@ -4764,7 +4768,8 @@ var ICONS = {
       }
       return '<div class="gift-card gift-locked" aria-label="Пока не получен">'+
         '<span class="gift-thumb"><span class="gift-img emoji-media">❓</span></span>'+
-        '<span class="gift-name">Уровень '+(i+1)+'</span></div>';
+        '<span class="gift-name">'+p.name+'</span>'+
+        '<span class="gift-sub">за уровень '+p.level+'</span></div>';
     }).join('');
     $('#app').innerHTML =
       '<div class="topbar">'+
@@ -4772,7 +4777,7 @@ var ICONS = {
         '<div></div><div></div>'+
       '</div>'+
       '<h1 class="home-title" style="text-align:center;">Мои пазлы</h1>'+
-      '<p class="home-sub" style="text-align:center;">Собрано '+puzzlesCount()+' из '+PUZZLES.length+'. За каждый пройденный уровень — новый пазл: распечатай, разрежь и собирай!</p>'+
+      '<p class="home-sub" style="text-align:center;">Собрано '+puzzlesCount()+' из '+PUZZLES.length+'. Каждые 5 уровней — новый пазл: распечатай, разрежь и собирай!</p>'+
       '<div class="gift-grid">'+cards+'</div>';
   }
 
@@ -4785,7 +4790,7 @@ var ICONS = {
     showInfoModal(
       '<div class="gift-modal-pic">'+puzzleThumb(i, 'gift-img-big')+'</div>'+
       '<h3>Пазл «'+p.name+'»</h3>'+
-      '<p style="color:var(--ink-soft);">'+n+' '+piecesWord(n)+' · подарок за уровень '+(i+1)+' «'+LEVEL_NAMES[i]+'»</p>'+
+      '<p style="color:var(--ink-soft);">'+n+' '+piecesWord(n)+' · подарок за уровень '+p.level+' «'+LEVEL_NAMES[p.level-1]+'»</p>'+
       action
     );
   }
@@ -4801,10 +4806,10 @@ var ICONS = {
 
   function renderDayComplete(){
     var day = state.playDay;
-    // подарок за уровень: цветной пазл А4 для печати (повторное прохождение — тот же пазл)
-    var puzzleIdx = day - 1;
-    var isNewPuzzle = !puzzleGot(puzzleIdx);
-    if(state.puzzlesGot.indexOf(puzzleIdx) === -1){ state.puzzlesGot.push(puzzleIdx); saveProgress(); }
+    // подарок каждые 5 уровней: цветной пазл А4 для печати (повторное прохождение — тот же пазл)
+    var puzzleIdx = puzzleForLevel(day);
+    var isNewPuzzle = puzzleIdx !== -1 && !puzzleGot(puzzleIdx);
+    if(puzzleIdx !== -1 && state.giftPuzzles.indexOf(puzzleIdx) === -1){ state.giftPuzzles.push(puzzleIdx); saveProgress(); }
     var wasFrontier = (day === state.curDay);
     if(wasFrontier){
       state.curDay = Math.min(LEVEL_COUNT + 1, state.curDay + 1);
@@ -4839,7 +4844,8 @@ var ICONS = {
         '<p class="award-rank-label">'+(u.type === 'badge' ? 'Новая награда:' : 'Новое достижение:')+'</p>'+
         '<p class="award-rank" style="font-size:1.1rem;">'+u.name+'</p>';
     }).join('');
-    var giftPuzzle = PUZZLES[puzzleIdx];
+    var giftPuzzle = puzzleIdx !== -1 ? PUZZLES[puzzleIdx] : null;
+    var nextIdx = nextPuzzleAfter(day), toNext = nextIdx !== -1 ? PUZZLES[nextIdx].level - day : 0;
     var giftHtml = giftPuzzle
       ? '<div class="gift-box">'+
           '<p class="award-rank-label">🎁 '+(isNewPuzzle ? 'Подарок — пазл для печати!' : 'Твой пазл за этот уровень')+'</p>'+
@@ -4849,7 +4855,9 @@ var ICONS = {
             '<span class="gift-sub">'+puzzlePieces(puzzleIdx)+' '+piecesWord(puzzlePieces(puzzleIdx))+'</span>'+
           '</button>'+
         '</div>'
-      : '';
+      : (toNext > 0
+        ? '<p class="gift-next">🧩 До пазла-подарка: '+toNext+' '+levelsWord(toNext)+'</p>'
+        : '');
     // v26: по прямой просьбе пользователя — «Вперёд» и «Повторить» как
     // ДВЕ отдельные кнопки (раньше было либо одно, либо другое, в
     // зависимости от того, свежее это прохождение или нет). «Повторить»
