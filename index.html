@@ -537,6 +537,30 @@
   .big-btn[data-action="show-numbers"]{background:linear-gradient(135deg,#FFB02E,#FF7A59) !important; box-shadow:0 18px 36px -16px rgba(255,122,89,.7), inset 0 1px 0 rgba(255,255,255,.5) !important;}
   .big-btn[data-action="start-day"]{background:linear-gradient(135deg,#5B4DFF,#8A4DFF 60%,#B04DFF) !important; box-shadow:0 20px 40px -16px rgba(91,77,255,.85), 0 0 0 4px rgba(91,77,255,.12), inset 0 1px 0 rgba(255,255,255,.5) !important; font-size:1.02rem;}
   .big-btn[data-action="start-review"] .alphabet-btn-icon{width:30px; height:30px; margin:-3px 0;}
+  .big-btn[data-action="show-friends"]{background:linear-gradient(135deg,#12C9A0,#16C8E6) !important; box-shadow:0 18px 36px -16px rgba(18,201,160,.75), inset 0 1px 0 rgba(255,255,255,.5) !important;}
+
+  /* ---------- Друзья Рыжика: подарки за уровни ---------- */
+  .friend-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:10px; margin-top:6px;}
+  .friend-card{display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 6px 12px; border-radius:20px;
+    background:var(--glass); border:1px solid var(--glass-line); box-shadow:0 12px 24px -16px rgba(var(--shadow-rgb),.45), inset 0 1px 0 rgba(255,255,255,.9);
+    cursor:pointer; font-family:var(--font-body); color:var(--ink); transition:transform .15s;}
+  .friend-card:active{transform:scale(.95);}
+  .friend-card.friend-locked{cursor:default; opacity:.55; filter:grayscale(.6);}
+  .friend-pic{width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 35% 30%, #fff, #EDE9FF 70%); box-shadow:inset 0 0 0 2px rgba(91,77,255,.12);}
+  .friend-img{width:64px; height:64px; object-fit:contain;}
+  .friend-img.emoji-media{font-size:2.4rem; width:auto; height:auto;}
+  .friend-name{font-weight:800; font-size:.74rem; line-height:1.15; text-align:center;}
+  .friend-gift{margin-top:10px; display:flex; flex-direction:column; align-items:center; gap:6px; animation:rankIn .55s ease .5s both;}
+  .friend-card-gift{min-width:150px; box-shadow:0 0 0 3px rgba(22,200,230,.55), 0 18px 32px -16px rgba(91,77,255,.6);}
+  .friend-card-gift .friend-pic{width:96px; height:96px;}
+  .friend-card-gift .friend-img{width:86px; height:86px;}
+  .friend-card-gift .friend-img.emoji-media{font-size:3.2rem;}
+  .friend-card-gift .friend-name{font-size:.9rem;}
+  .friend-modal-pic{width:150px; height:150px; margin:0 auto 6px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 35% 30%, #fff, #EDE9FF 70%);}
+  .friend-img-big{width:136px; height:136px; object-fit:contain;}
+  .friend-img-big.emoji-media{font-size:5rem; width:auto; height:auto;}
   .fab{background:linear-gradient(135deg,var(--ind),var(--cyan)); border:1px solid rgba(255,255,255,.4); box-shadow:0 18px 34px -14px rgba(91,77,255,.75), inset 0 1px 0 rgba(255,255,255,.5);}
   .skip-fab{background:var(--glass); border:1px solid var(--glass-line);}
 
@@ -2414,7 +2438,7 @@ var ICONS = {
   // v5f: levelProgress persists dayDone/topicDone/mistakes/used-words per
   // level — leaving a level mid-way (🏠) and coming back resumes instead
   // of losing what was already done, per the user's explicit request.
-  function saveProgress(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({stars:state.stars, sound:state.sound, lettersOnlyMode:state.lettersOnlyMode, activeMode:state.activeMode, voiceName:state.voiceName, childName:state.childName, curDay:state.curDay, streak:state.streak, badgesShown:state.badgesShown, levelProgress:state.levelProgress, achievementsUnlocked:state.achievementsUnlocked, achProgress:state.achProgress, analyticsLog:state.analyticsLog, alphabetStats:state.alphabetStats, dailyStats:state.dailyStats, sessionLocked:state.sessionLocked, sessionEndsAt:state.sessionEndsAt, certificateShown:state.certificateShown, certBgBag:state.certBgBag})); }catch(e){} }
+  function saveProgress(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({stars:state.stars, sound:state.sound, lettersOnlyMode:state.lettersOnlyMode, activeMode:state.activeMode, voiceName:state.voiceName, childName:state.childName, curDay:state.curDay, streak:state.streak, badgesShown:state.badgesShown, levelProgress:state.levelProgress, achievementsUnlocked:state.achievementsUnlocked, achProgress:state.achProgress, analyticsLog:state.analyticsLog, alphabetStats:state.alphabetStats, dailyStats:state.dailyStats, sessionLocked:state.sessionLocked, sessionEndsAt:state.sessionEndsAt, certificateShown:state.certificateShown, certBgBag:state.certBgBag, friendsGot:state.friendsGot})); }catch(e){} }
 
   var saved = loadProgress();
   var state = {
@@ -2466,6 +2490,8 @@ var ICONS = {
     // перетасовывается заново). Персистится, чтобы порядок продолжался
     // между сессиями, не только пока открыта вкладка.
     certBgBag: saved.certBgBag || [],
+    // «Друзья Рыжика»: номера уровней (0..24), за которые уже получен друг-подарок
+    friendsGot: saved.friendsGot || [],
     sessionWarned: false,
     sessionEndNotified: false,
     // v15: достижения — ОТДЕЛЬНАЯ от STAR_BADGES система (там триггер —
@@ -3606,6 +3632,8 @@ var ICONS = {
     // «Повторение» собирает то, что реально давалось сложнее всего
     // (analyticsLog: суммарные ошибки + давность), а не случайный набор.
     var reviewBtn = '<button class="big-btn solid-berry" style="display:inline-flex; align-items:center; justify-content:center; gap:8px;" data-action="start-review">'+mediaTag(ICONS.section_review,'alphabet-btn-icon')+' Повторение</button>';
+    // «Друзья Рыжика» — альбом подарков за уровни (счётчик собранных прямо на кнопке)
+    var friendsBtn = '<button class="big-btn" style="display:inline-flex; align-items:center; justify-content:center; gap:8px;" data-action="show-friends">'+mediaTag(FRIEND_IMG[0] ? FRIEND_IMG[0] : '🎁','alphabet-btn-icon')+' Друзья '+friendsCount()+'/'+FRIENDS.length+'</button>';
     $('#app').innerHTML =
       '<div class="topbar">'+
         '<div class="topbar-mid">'+
@@ -3625,7 +3653,7 @@ var ICONS = {
       '</button>'+
       '<h1 class="home-title">Академия Рыжика</h1>'+
       '<p class="home-sub">Уровень '+level+' из '+LEVEL_COUNT+' · '+LEVEL_NAMES[level-1]+'</p>'+
-      '<div style="text-align:center; margin:6px 0 10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">'+alphabetBtn+numbersBtn+reviewBtn+'</div>'+
+      '<div style="text-align:center; margin:6px 0 10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">'+alphabetBtn+numbersBtn+reviewBtn+friendsBtn+'</div>'+
       '<div style="text-align:center; margin:0 0 18px;">'+startBtn+'</div>'+
       (state.certificateShown ? '<div style="text-align:center; margin:0 0 18px;"><button class="big-btn solid-berry" data-action="view-certificate">🏆 Мой сертификат</button></div>' : '')+
       '<div class="level-map">'+levelCards+'</div>'+
@@ -4687,8 +4715,101 @@ var ICONS = {
     else renderCurrentRound();
   }
 
+  /* =================== ДРУЗЬЯ РЫЖИКА (подарок за уровень) ===================
+   * За каждый пройденный уровень — новый лесной друг в альбом: коллекционная
+   * карточка с именем и «суперсилой». 25 уровней = 25 друзей. Аналог
+   * раскрасок-подарков у «Совёнка Тима», но коллекция, а не раскраска.
+   * Картинки друзей: FRIEND_IMG[i] = 'img/<хэш>.webp' (пока их нет — эмодзи-
+   * заглушка, всё работает). Карточка для печати: FRIEND_CARD[i] — ссылка на
+   * готовый файл (кнопка «Сохранить карточку» появляется, только когда он есть).
+   * Промты для генерации — «Академия Рыжика/ПОДАРКИ — Друзья Рыжика.md». */
+  var FRIENDS = [
+    {name:'Зайчонок Прыгунок',  emoji:'🐰', power:'Первым узнаёт новые буквы'},
+    {name:'Ёжик Счётик',        emoji:'🦔', power:'Считает грибочки и шишки'},
+    {name:'Медвежонок Топтыжка',emoji:'🐻', power:'Громко и весело читает слоги'},
+    {name:'Белочка Шустрик',    emoji:'🐿️', power:'Быстрее всех находит нужную букву'},
+    {name:'Лягушонок Квакс',    emoji:'🐸', power:'Слышит первый звук в любом слове'},
+    {name:'Мышонок Пик',        emoji:'🐭', power:'Замечает самые маленькие детали'},
+    {name:'Утёнок Плюх',        emoji:'🦆', power:'Знает, какое число больше'},
+    {name:'Черепашка Тиша',     emoji:'🐢', power:'Не торопится — и не ошибается'},
+    {name:'Котёнок Мурчик',     emoji:'🐱', power:'Придумывает рифмы'},
+    {name:'Щенок Дружок',       emoji:'🐶', power:'Собирает слова из букв'},
+    {name:'Енотик Полоскун',    emoji:'🦝', power:'Раскладывает всё по порядку'},
+    {name:'Пингвинёнок Пинг',   emoji:'🐧', power:'Делит всё поровну'},
+    {name:'Бобрёнок Строитель', emoji:'🦫', power:'Строит слова, как домики'},
+    {name:'Слонёнок Тоша',      emoji:'🐘', power:'Запоминает всё-всё'},
+    {name:'Жирафик Высотик',    emoji:'🦒', power:'Видит все числа сверху'},
+    {name:'Пчёлка Жужа',        emoji:'🐝', power:'Трудится и никогда не сдаётся'},
+    {name:'Божья коровка Точка',emoji:'🐞', power:'Считает точки на спинке'},
+    {name:'Улитка Ракушка',     emoji:'🐌', power:'Внимательно слушает каждый звук'},
+    {name:'Дельфинчик Плюм',    emoji:'🐬', power:'Ныряет в слова и находит слоги'},
+    {name:'Оленёнок Звёздочка', emoji:'🦌', power:'Знает чётные и нечётные числа'},
+    {name:'Хомячок Запасливый', emoji:'🐹', power:'Складывает и вычитает'},
+    {name:'Панда Бамбук',       emoji:'🐼', power:'Спокойно решает трудные задачи'},
+    {name:'Коала Соня',         emoji:'🐨', power:'Читает сказки перед сном'},
+    {name:'Тигрёнок Смельчак',  emoji:'🐯', power:'Не боится новых заданий'},
+    {name:'Дракончик Искорка',  emoji:'🐉', power:'Хранитель всех знаний Академии'}
+  ];
+  var FRIEND_IMG = {};   // номер друга (0..24) -> 'img/<хэш>.webp'
+  var FRIEND_CARD = {};  // номер друга (0..24) -> 'gifts/<файл>.png' (карточка для печати)
+
+  // Друг получен, если уровень пройден: отмечаем при прохождении, а для тех,
+  // кто прошёл уровни до появления подарков, — всё, что до текущего уровня.
+  function friendGot(i){ return state.friendsGot.indexOf(i) !== -1 || (i + 1) < state.curDay; }
+  function friendsCount(){ var n = 0; for(var i=0;i<FRIENDS.length;i++) if(friendGot(i)) n++; return n; }
+  function friendPic(i, cls){ return mediaTag(FRIEND_IMG[i] || FRIENDS[i].emoji, cls); }
+
+  function renderFriendsAlbum(){
+    state.screen = 'friends';
+    var cards = FRIENDS.map(function(f, i){
+      if(friendGot(i)){
+        return '<button class="friend-card" data-action="show-friend" data-i="'+i+'">'+
+          '<span class="friend-pic">'+friendPic(i, 'friend-img')+'</span>'+
+          '<span class="friend-name">'+f.name+'</span></button>';
+      }
+      return '<div class="friend-card friend-locked" aria-label="Пока не получен">'+
+        '<span class="friend-pic"><span class="friend-img emoji-media">❓</span></span>'+
+        '<span class="friend-name">Уровень '+(i+1)+'</span></div>';
+    }).join('');
+    $('#app').innerHTML =
+      '<div class="topbar">'+
+        '<button class="icon-btn" data-action="go-home" aria-label="Домой">'+btnIcon(ICONS.btn_home)+'</button>'+
+        '<div></div><div></div>'+
+      '</div>'+
+      '<h1 class="home-title" style="text-align:center;">Друзья Рыжика</h1>'+
+      '<p class="home-sub" style="text-align:center;">Собрано '+friendsCount()+' из '+FRIENDS.length+'. За каждый пройденный уровень — новый друг!</p>'+
+      '<div class="friend-grid">'+cards+'</div>';
+  }
+
+  function showFriendModal(i){
+    var f = FRIENDS[i];
+    var save = FRIEND_CARD[i]
+      ? '<button class="big-btn solid-leaf" data-action="save-friend-card" data-i="'+i+'" style="margin-top:12px;">Сохранить карточку</button>'
+      : '';
+    showInfoModal(
+      '<div class="friend-modal-pic">'+friendPic(i, 'friend-img-big')+'</div>'+
+      '<h3>'+f.name+'</h3>'+
+      '<p style="color:var(--ink-soft);">Суперсила: '+f.power+'</p>'+
+      '<p style="font-size:.85rem; color:var(--ink-soft);">Подарок за уровень '+(i+1)+' «'+LEVEL_NAMES[i]+'»</p>'+
+      save
+    );
+  }
+  function saveFriendCard(i){
+    var url = FRIEND_CARD[i];
+    if(!url) return;
+    var abs = new URL(url, location.href).href;
+    var tg = window.Telegram && window.Telegram.WebApp;
+    // в Telegram открываем во внешнем браузере — там картинку можно сохранить и распечатать
+    try{ if(tg && tg.openLink){ tg.openLink(abs); return; } }catch(e){}
+    window.open(abs, '_blank');
+  }
+
   function renderDayComplete(){
     var day = state.playDay;
+    // подарок за уровень: новый друг в альбом (повторное прохождение — тот же друг)
+    var friendIdx = day - 1;
+    var isNewFriend = !friendGot(friendIdx);
+    if(state.friendsGot.indexOf(friendIdx) === -1){ state.friendsGot.push(friendIdx); saveProgress(); }
     var wasFrontier = (day === state.curDay);
     if(wasFrontier){
       state.curDay = Math.min(LEVEL_COUNT + 1, state.curDay + 1);
@@ -4723,6 +4844,16 @@ var ICONS = {
         '<p class="award-rank-label">'+(u.type === 'badge' ? 'Новая награда:' : 'Новое достижение:')+'</p>'+
         '<p class="award-rank" style="font-size:1.1rem;">'+u.name+'</p>';
     }).join('');
+    var giftFriend = FRIENDS[friendIdx];
+    var giftHtml = giftFriend
+      ? '<div class="friend-gift">'+
+          '<p class="award-rank-label">🎁 '+(isNewFriend ? 'Подарок — новый друг в альбоме!' : 'Твой друг за этот уровень')+'</p>'+
+          '<button class="friend-card friend-card-gift" data-action="show-friend" data-i="'+friendIdx+'">'+
+            '<span class="friend-pic">'+friendPic(friendIdx, 'friend-img')+'</span>'+
+            '<span class="friend-name">'+giftFriend.name+'</span>'+
+          '</button>'+
+        '</div>'
+      : '';
     // v26: по прямой просьбе пользователя — «Вперёд» и «Повторить» как
     // ДВЕ отдельные кнопки (раньше было либо одно, либо другое, в
     // зависимости от того, свежее это прохождение или нет). «Повторить»
@@ -4749,6 +4880,7 @@ var ICONS = {
         '<p style="font-weight:700; color:var(--ink-soft); margin:0;">'+subtitle+'</p>'+
         awardHtml+
         unlockedHtml+
+        giftHtml+
         '<p style="font-weight:700; color:var(--ink-soft); margin:6px 0 0;">Заработано звёзд: '+state.roundStars+' ⭐</p>'+
         // v94: по прямой просьбе пользователя - "звание не звучит". Расследовала:
         // само звание озвучивается ВЕРНО (проверено на всех 25 - Whisper
@@ -5921,6 +6053,9 @@ var ICONS = {
       case 'start-topic': startTopicBatch(el.dataset.topic); break;
       case 'go-home': renderHome(); break;
       case 'paywall-open-bot': openBotFromPaywall(); break;
+      case 'show-friends': renderFriendsAlbum(); break;
+      case 'show-friend': showFriendModal(parseInt(el.dataset.i, 10)); break;
+      case 'save-friend-card': saveFriendCard(parseInt(el.dataset.i, 10)); break;
       case 'go-prev-round': goToPreviousRound(); break;
       case 'save-name':
         (function(){
