@@ -537,30 +537,30 @@
   .big-btn[data-action="show-numbers"]{background:linear-gradient(135deg,#FFB02E,#FF7A59) !important; box-shadow:0 18px 36px -16px rgba(255,122,89,.7), inset 0 1px 0 rgba(255,255,255,.5) !important;}
   .big-btn[data-action="start-day"]{background:linear-gradient(135deg,#5B4DFF,#8A4DFF 60%,#B04DFF) !important; box-shadow:0 20px 40px -16px rgba(91,77,255,.85), 0 0 0 4px rgba(91,77,255,.12), inset 0 1px 0 rgba(255,255,255,.5) !important; font-size:1.02rem;}
   .big-btn[data-action="start-review"] .alphabet-btn-icon{width:30px; height:30px; margin:-3px 0;}
-  .big-btn[data-action="show-friends"]{background:linear-gradient(135deg,#12C9A0,#16C8E6) !important; box-shadow:0 18px 36px -16px rgba(18,201,160,.75), inset 0 1px 0 rgba(255,255,255,.5) !important;}
+  .big-btn[data-action="show-puzzles"]{background:linear-gradient(135deg,#12C9A0,#16C8E6) !important; box-shadow:0 18px 36px -16px rgba(18,201,160,.75), inset 0 1px 0 rgba(255,255,255,.5) !important;}
 
-  /* ---------- Друзья Рыжика: подарки за уровни ---------- */
-  .friend-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:10px; margin-top:6px;}
-  .friend-card{display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 6px 12px; border-radius:20px;
+  /* ---------- Пазлы: подарки за уровни ---------- */
+  .gift-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:10px; margin-top:6px;}
+  .gift-card{display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 6px 12px; border-radius:20px;
     background:var(--glass); border:1px solid var(--glass-line); box-shadow:0 12px 24px -16px rgba(var(--shadow-rgb),.45), inset 0 1px 0 rgba(255,255,255,.9);
     cursor:pointer; font-family:var(--font-body); color:var(--ink); transition:transform .15s;}
-  .friend-card:active{transform:scale(.95);}
-  .friend-card.friend-locked{cursor:default; opacity:.55; filter:grayscale(.6);}
-  .friend-pic{width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(circle at 35% 30%, #fff, #EDE9FF 70%); box-shadow:inset 0 0 0 2px rgba(91,77,255,.12);}
-  .friend-img{width:64px; height:64px; object-fit:contain;}
-  .friend-img.emoji-media{font-size:2.4rem; width:auto; height:auto;}
-  .friend-name{font-weight:800; font-size:.74rem; line-height:1.15; text-align:center;}
-  .friend-gift{margin-top:10px; display:flex; flex-direction:column; align-items:center; gap:6px; animation:rankIn .55s ease .5s both;}
-  .friend-card-gift{min-width:150px; box-shadow:0 0 0 3px rgba(22,200,230,.55), 0 18px 32px -16px rgba(91,77,255,.6);}
-  .friend-card-gift .friend-pic{width:96px; height:96px;}
-  .friend-card-gift .friend-img{width:86px; height:86px;}
-  .friend-card-gift .friend-img.emoji-media{font-size:3.2rem;}
-  .friend-card-gift .friend-name{font-size:.9rem;}
-  .friend-modal-pic{width:150px; height:150px; margin:0 auto 6px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(circle at 35% 30%, #fff, #EDE9FF 70%);}
-  .friend-img-big{width:136px; height:136px; object-fit:contain;}
-  .friend-img-big.emoji-media{font-size:5rem; width:auto; height:auto;}
+  .gift-card:active{transform:scale(.95);}
+  .gift-card.gift-locked{cursor:default; opacity:.55; filter:grayscale(.6);}
+  .gift-thumb{width:64px; height:90px; border-radius:10px; overflow:hidden; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 35% 30%, #fff, #EDE9FF 70%); box-shadow:0 0 0 2px rgba(91,77,255,.14), 0 6px 14px -8px rgba(var(--shadow-rgb),.5);}
+  .gift-img{width:100%; height:100%; object-fit:cover;}
+  .gift-img.emoji-media{font-size:2.2rem; width:auto; height:auto;}
+  .gift-name{font-weight:800; font-size:.74rem; line-height:1.15; text-align:center;}
+  .gift-sub{font-weight:700; font-size:.68rem; color:var(--ink-soft);}
+  .gift-box{margin-top:10px; display:flex; flex-direction:column; align-items:center; gap:6px; animation:rankIn .55s ease .5s both;}
+  .gift-card-big{min-width:150px; box-shadow:0 0 0 3px rgba(22,200,230,.55), 0 18px 32px -16px rgba(91,77,255,.6);}
+  .gift-card-big .gift-thumb{width:86px; height:122px;}
+  .gift-card-big .gift-img.emoji-media{font-size:3rem;}
+  .gift-card-big .gift-name{font-size:.9rem;}
+  .gift-modal-pic{width:150px; height:212px; margin:0 auto 8px; border-radius:14px; overflow:hidden; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 35% 30%, #fff, #EDE9FF 70%); box-shadow:0 0 0 3px rgba(91,77,255,.15);}
+  .gift-img-big{width:100%; height:100%; object-fit:cover;}
+  .gift-img-big.emoji-media{font-size:5rem; width:auto; height:auto;}
   .fab{background:linear-gradient(135deg,var(--ind),var(--cyan)); border:1px solid rgba(255,255,255,.4); box-shadow:0 18px 34px -14px rgba(91,77,255,.75), inset 0 1px 0 rgba(255,255,255,.5);}
   .skip-fab{background:var(--glass); border:1px solid var(--glass-line);}
 
@@ -2438,7 +2438,7 @@ var ICONS = {
   // v5f: levelProgress persists dayDone/topicDone/mistakes/used-words per
   // level — leaving a level mid-way (🏠) and coming back resumes instead
   // of losing what was already done, per the user's explicit request.
-  function saveProgress(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({stars:state.stars, sound:state.sound, lettersOnlyMode:state.lettersOnlyMode, activeMode:state.activeMode, voiceName:state.voiceName, childName:state.childName, curDay:state.curDay, streak:state.streak, badgesShown:state.badgesShown, levelProgress:state.levelProgress, achievementsUnlocked:state.achievementsUnlocked, achProgress:state.achProgress, analyticsLog:state.analyticsLog, alphabetStats:state.alphabetStats, dailyStats:state.dailyStats, sessionLocked:state.sessionLocked, sessionEndsAt:state.sessionEndsAt, certificateShown:state.certificateShown, certBgBag:state.certBgBag, friendsGot:state.friendsGot})); }catch(e){} }
+  function saveProgress(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({stars:state.stars, sound:state.sound, lettersOnlyMode:state.lettersOnlyMode, activeMode:state.activeMode, voiceName:state.voiceName, childName:state.childName, curDay:state.curDay, streak:state.streak, badgesShown:state.badgesShown, levelProgress:state.levelProgress, achievementsUnlocked:state.achievementsUnlocked, achProgress:state.achProgress, analyticsLog:state.analyticsLog, alphabetStats:state.alphabetStats, dailyStats:state.dailyStats, sessionLocked:state.sessionLocked, sessionEndsAt:state.sessionEndsAt, certificateShown:state.certificateShown, certBgBag:state.certBgBag, puzzlesGot:state.puzzlesGot})); }catch(e){} }
 
   var saved = loadProgress();
   var state = {
@@ -2490,8 +2490,8 @@ var ICONS = {
     // перетасовывается заново). Персистится, чтобы порядок продолжался
     // между сессиями, не только пока открыта вкладка.
     certBgBag: saved.certBgBag || [],
-    // «Друзья Рыжика»: номера уровней (0..24), за которые уже получен друг-подарок
-    friendsGot: saved.friendsGot || [],
+    // подарки-пазлы: номера уровней (0..24), за которые пазл уже получен
+    puzzlesGot: saved.puzzlesGot || saved.friendsGot || [],
     sessionWarned: false,
     sessionEndNotified: false,
     // v15: достижения — ОТДЕЛЬНАЯ от STAR_BADGES система (там триггер —
@@ -3632,8 +3632,8 @@ var ICONS = {
     // «Повторение» собирает то, что реально давалось сложнее всего
     // (analyticsLog: суммарные ошибки + давность), а не случайный набор.
     var reviewBtn = '<button class="big-btn solid-berry" style="display:inline-flex; align-items:center; justify-content:center; gap:8px;" data-action="start-review">'+mediaTag(ICONS.section_review,'alphabet-btn-icon')+' Повторение</button>';
-    // «Друзья Рыжика» — альбом подарков за уровни (счётчик собранных прямо на кнопке)
-    var friendsBtn = '<button class="big-btn" style="display:inline-flex; align-items:center; justify-content:center; gap:8px;" data-action="show-friends">'+mediaTag(FRIEND_IMG[0] ? FRIEND_IMG[0] : '🎁','alphabet-btn-icon')+' Друзья '+friendsCount()+'/'+FRIENDS.length+'</button>';
+    // «Пазлы» — подарки за уровни: цветные пазлы А4 для печати (счётчик на кнопке)
+    var puzzlesBtn = '<button class="big-btn" style="display:inline-flex; align-items:center; justify-content:center; gap:8px;" data-action="show-puzzles"><span class="alphabet-btn-icon emoji-media">🧩</span> Пазлы '+puzzlesCount()+'/'+PUZZLES.length+'</button>';
     $('#app').innerHTML =
       '<div class="topbar">'+
         '<div class="topbar-mid">'+
@@ -3653,7 +3653,7 @@ var ICONS = {
       '</button>'+
       '<h1 class="home-title">Академия Рыжика</h1>'+
       '<p class="home-sub">Уровень '+level+' из '+LEVEL_COUNT+' · '+LEVEL_NAMES[level-1]+'</p>'+
-      '<div style="text-align:center; margin:6px 0 10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">'+alphabetBtn+numbersBtn+reviewBtn+friendsBtn+'</div>'+
+      '<div style="text-align:center; margin:6px 0 10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">'+alphabetBtn+numbersBtn+reviewBtn+puzzlesBtn+'</div>'+
       '<div style="text-align:center; margin:0 0 18px;">'+startBtn+'</div>'+
       (state.certificateShown ? '<div style="text-align:center; margin:0 0 18px;"><button class="big-btn solid-berry" data-action="view-certificate">🏆 Мой сертификат</button></div>' : '')+
       '<div class="level-map">'+levelCards+'</div>'+
@@ -4715,101 +4715,96 @@ var ICONS = {
     else renderCurrentRound();
   }
 
-  /* =================== ДРУЗЬЯ РЫЖИКА (подарок за уровень) ===================
-   * За каждый пройденный уровень — новый лесной друг в альбом: коллекционная
-   * карточка с именем и «суперсилой». 25 уровней = 25 друзей. Аналог
-   * раскрасок-подарков у «Совёнка Тима», но коллекция, а не раскраска.
-   * Картинки друзей: FRIEND_IMG[i] = 'img/<хэш>.webp' (пока их нет — эмодзи-
-   * заглушка, всё работает). Карточка для печати: FRIEND_CARD[i] — ссылка на
-   * готовый файл (кнопка «Сохранить карточку» появляется, только когда он есть).
-   * Промты для генерации — «Академия Рыжика/ПОДАРКИ — Друзья Рыжика.md». */
-  var FRIENDS = [
-    {name:'Зайчонок Прыгунок',  emoji:'🐰', power:'Первым узнаёт новые буквы'},
-    {name:'Ёжик Счётик',        emoji:'🦔', power:'Считает грибочки и шишки'},
-    {name:'Медвежонок Топтыжка',emoji:'🐻', power:'Громко и весело читает слоги'},
-    {name:'Белочка Шустрик',    emoji:'🐿️', power:'Быстрее всех находит нужную букву'},
-    {name:'Лягушонок Квакс',    emoji:'🐸', power:'Слышит первый звук в любом слове'},
-    {name:'Мышонок Пик',        emoji:'🐭', power:'Замечает самые маленькие детали'},
-    {name:'Утёнок Плюх',        emoji:'🦆', power:'Знает, какое число больше'},
-    {name:'Черепашка Тиша',     emoji:'🐢', power:'Не торопится — и не ошибается'},
-    {name:'Котёнок Мурчик',     emoji:'🐱', power:'Придумывает рифмы'},
-    {name:'Щенок Дружок',       emoji:'🐶', power:'Собирает слова из букв'},
-    {name:'Енотик Полоскун',    emoji:'🦝', power:'Раскладывает всё по порядку'},
-    {name:'Пингвинёнок Пинг',   emoji:'🐧', power:'Делит всё поровну'},
-    {name:'Бобрёнок Строитель', emoji:'🦫', power:'Строит слова, как домики'},
-    {name:'Слонёнок Тоша',      emoji:'🐘', power:'Запоминает всё-всё'},
-    {name:'Жирафик Высотик',    emoji:'🦒', power:'Видит все числа сверху'},
-    {name:'Пчёлка Жужа',        emoji:'🐝', power:'Трудится и никогда не сдаётся'},
-    {name:'Божья коровка Точка',emoji:'🐞', power:'Считает точки на спинке'},
-    {name:'Улитка Ракушка',     emoji:'🐌', power:'Внимательно слушает каждый звук'},
-    {name:'Дельфинчик Плюм',    emoji:'🐬', power:'Ныряет в слова и находит слоги'},
-    {name:'Оленёнок Звёздочка', emoji:'🦌', power:'Знает чётные и нечётные числа'},
-    {name:'Хомячок Запасливый', emoji:'🐹', power:'Складывает и вычитает'},
-    {name:'Панда Бамбук',       emoji:'🐼', power:'Спокойно решает трудные задачи'},
-    {name:'Коала Соня',         emoji:'🐨', power:'Читает сказки перед сном'},
-    {name:'Тигрёнок Смельчак',  emoji:'🐯', power:'Не боится новых заданий'},
-    {name:'Дракончик Искорка',  emoji:'🐉', power:'Хранитель всех знаний Академии'}
+  /* =================== ПАЗЛЫ (подарок за уровень) ===================
+   * За каждый пройденный уровень — цветной пазл формата А4: распечатать,
+   * разрезать по линиям и собирать. Сложность растёт с уровнем (4 → 20 деталей).
+   * Аналог раскрасок-подарков у «Совёнка Тима».
+   * Файлы делает «Академия Рыжика/tools/build_puzzles.py» из картинок
+   * «Аудио и картинки/пазлы/01.png…25.png»: PDF (лист 1 — пазл с линиями разреза,
+   * лист 2 — образец) и миниатюру; он же переписывает строку PUZZLE_FILES ниже.
+   * Пока картинки нет — пазл в альбоме есть, но помечен «скоро».
+   * Промты для картинок — «Академия Рыжика/ПОДАРКИ — Пазлы.md». */
+  var PUZZLES = [
+    {name:'Солнечная полянка'}, {name:'Воздушные шары'}, {name:'Лесной пикник'}, {name:'Кораблик в море'},
+    {name:'Радуга над деревней'}, {name:'Полёт в космос'}, {name:'Подводный мир'}, {name:'Сказочный замок'},
+    {name:'Весёлый паровозик'}, {name:'Цирк зверят'}, {name:'Огород'}, {name:'Зимняя горка'},
+    {name:'В гостях у динозавров'}, {name:'Ферма'}, {name:'Город машинок'}, {name:'Остров сокровищ'},
+    {name:'Осенний лес'}, {name:'Рыжик-художник'}, {name:'Лесной концерт'}, {name:'Зоопарк'},
+    {name:'Кондитерская'}, {name:'Звёздная ночь'}, {name:'На пляже'}, {name:'Волшебная библиотека'},
+    {name:'Выпускной в Академии'}
   ];
-  var FRIEND_IMG = {};   // номер друга (0..24) -> 'img/<хэш>.webp'
-  var FRIEND_CARD = {};  // номер друга (0..24) -> 'gifts/<файл>.png' (карточка для печати)
+  var PUZZLE_FILES = {}; // @@PUZZLE_FILES@@
 
-  // Друг получен, если уровень пройден: отмечаем при прохождении, а для тех,
+  // (столбцы, ряды) — должно совпадать с puzzle_grid() в tools/build_puzzles.py
+  function puzzleGrid(i){ var lv = i + 1;
+    if(lv <= 2) return [2,2]; if(lv <= 5) return [2,3]; if(lv <= 9) return [3,3];
+    if(lv <= 14) return [3,4]; if(lv <= 19) return [4,4]; return [4,5]; }
+  function puzzlePieces(i){ var g = puzzleGrid(i); return g[0] * g[1]; }
+  function piecesWord(n){
+    if(n % 10 === 1 && n % 100 !== 11) return 'деталь';
+    if(n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14)) return 'детали';
+    return 'деталей';
+  }
+  // Пазл получен, если уровень пройден: отмечаем при прохождении, а для тех,
   // кто прошёл уровни до появления подарков, — всё, что до текущего уровня.
-  function friendGot(i){ return state.friendsGot.indexOf(i) !== -1 || (i + 1) < state.curDay; }
-  function friendsCount(){ var n = 0; for(var i=0;i<FRIENDS.length;i++) if(friendGot(i)) n++; return n; }
-  function friendPic(i, cls){ return mediaTag(FRIEND_IMG[i] || FRIENDS[i].emoji, cls); }
+  function puzzleGot(i){ return state.puzzlesGot.indexOf(i) !== -1 || (i + 1) < state.curDay; }
+  function puzzlesCount(){ var n = 0; for(var i=0;i<PUZZLES.length;i++) if(puzzleGot(i)) n++; return n; }
+  function puzzleFile(i){ return PUZZLE_FILES[String(i)] || null; }
+  function puzzleThumb(i, cls){ var f = puzzleFile(i); return mediaTag(f && f.thumb ? f.thumb : '🧩', cls); }
 
-  function renderFriendsAlbum(){
-    state.screen = 'friends';
-    var cards = FRIENDS.map(function(f, i){
-      if(friendGot(i)){
-        return '<button class="friend-card" data-action="show-friend" data-i="'+i+'">'+
-          '<span class="friend-pic">'+friendPic(i, 'friend-img')+'</span>'+
-          '<span class="friend-name">'+f.name+'</span></button>';
+  function renderPuzzlesAlbum(){
+    state.screen = 'puzzles';
+    var cards = PUZZLES.map(function(p, i){
+      if(puzzleGot(i)){
+        var ready = !!puzzleFile(i);
+        return '<button class="gift-card" data-action="show-puzzle" data-i="'+i+'">'+
+          '<span class="gift-thumb">'+puzzleThumb(i, 'gift-img')+'</span>'+
+          '<span class="gift-name">'+p.name+'</span>'+
+          '<span class="gift-sub">'+(ready ? puzzlePieces(i)+' '+piecesWord(puzzlePieces(i)) : 'скоро')+'</span></button>';
       }
-      return '<div class="friend-card friend-locked" aria-label="Пока не получен">'+
-        '<span class="friend-pic"><span class="friend-img emoji-media">❓</span></span>'+
-        '<span class="friend-name">Уровень '+(i+1)+'</span></div>';
+      return '<div class="gift-card gift-locked" aria-label="Пока не получен">'+
+        '<span class="gift-thumb"><span class="gift-img emoji-media">❓</span></span>'+
+        '<span class="gift-name">Уровень '+(i+1)+'</span></div>';
     }).join('');
     $('#app').innerHTML =
       '<div class="topbar">'+
         '<button class="icon-btn" data-action="go-home" aria-label="Домой">'+btnIcon(ICONS.btn_home)+'</button>'+
         '<div></div><div></div>'+
       '</div>'+
-      '<h1 class="home-title" style="text-align:center;">Друзья Рыжика</h1>'+
-      '<p class="home-sub" style="text-align:center;">Собрано '+friendsCount()+' из '+FRIENDS.length+'. За каждый пройденный уровень — новый друг!</p>'+
-      '<div class="friend-grid">'+cards+'</div>';
+      '<h1 class="home-title" style="text-align:center;">Мои пазлы</h1>'+
+      '<p class="home-sub" style="text-align:center;">Собрано '+puzzlesCount()+' из '+PUZZLES.length+'. За каждый пройденный уровень — новый пазл: распечатай, разрежь и собирай!</p>'+
+      '<div class="gift-grid">'+cards+'</div>';
   }
 
-  function showFriendModal(i){
-    var f = FRIENDS[i];
-    var save = FRIEND_CARD[i]
-      ? '<button class="big-btn solid-leaf" data-action="save-friend-card" data-i="'+i+'" style="margin-top:12px;">Сохранить карточку</button>'
-      : '';
+  function showPuzzleModal(i){
+    var p = PUZZLES[i], f = puzzleFile(i), n = puzzlePieces(i);
+    var action = f
+      ? '<button class="big-btn solid-leaf" data-action="open-puzzle" data-i="'+i+'" style="margin-top:12px;">Открыть и распечатать</button>'+
+        '<p style="font-size:.82rem; color:var(--ink-soft); margin-top:10px;">Распечатайте на листе А4 (лучше на плотной бумаге или наклейте на картон) и разрежьте по линиям. Второй лист — образец картинки, по нему удобно собирать.</p>'
+      : '<p style="font-weight:700; color:var(--ink-soft); margin-top:10px;">Пазл скоро будет готов — загляни сюда чуть позже!</p>';
     showInfoModal(
-      '<div class="friend-modal-pic">'+friendPic(i, 'friend-img-big')+'</div>'+
-      '<h3>'+f.name+'</h3>'+
-      '<p style="color:var(--ink-soft);">Суперсила: '+f.power+'</p>'+
-      '<p style="font-size:.85rem; color:var(--ink-soft);">Подарок за уровень '+(i+1)+' «'+LEVEL_NAMES[i]+'»</p>'+
-      save
+      '<div class="gift-modal-pic">'+puzzleThumb(i, 'gift-img-big')+'</div>'+
+      '<h3>Пазл «'+p.name+'»</h3>'+
+      '<p style="color:var(--ink-soft);">'+n+' '+piecesWord(n)+' · подарок за уровень '+(i+1)+' «'+LEVEL_NAMES[i]+'»</p>'+
+      action
     );
   }
-  function saveFriendCard(i){
-    var url = FRIEND_CARD[i];
-    if(!url) return;
-    var abs = new URL(url, location.href).href;
+  function openPuzzle(i){
+    var f = puzzleFile(i);
+    if(!f) return;
+    var abs = new URL(f.pdf, location.href).href;
     var tg = window.Telegram && window.Telegram.WebApp;
-    // в Telegram открываем во внешнем браузере — там картинку можно сохранить и распечатать
+    // в Telegram открываем во внешнем браузере — там PDF можно сохранить и распечатать
     try{ if(tg && tg.openLink){ tg.openLink(abs); return; } }catch(e){}
     window.open(abs, '_blank');
   }
 
   function renderDayComplete(){
     var day = state.playDay;
-    // подарок за уровень: новый друг в альбом (повторное прохождение — тот же друг)
-    var friendIdx = day - 1;
-    var isNewFriend = !friendGot(friendIdx);
-    if(state.friendsGot.indexOf(friendIdx) === -1){ state.friendsGot.push(friendIdx); saveProgress(); }
+    // подарок за уровень: цветной пазл А4 для печати (повторное прохождение — тот же пазл)
+    var puzzleIdx = day - 1;
+    var isNewPuzzle = !puzzleGot(puzzleIdx);
+    if(state.puzzlesGot.indexOf(puzzleIdx) === -1){ state.puzzlesGot.push(puzzleIdx); saveProgress(); }
     var wasFrontier = (day === state.curDay);
     if(wasFrontier){
       state.curDay = Math.min(LEVEL_COUNT + 1, state.curDay + 1);
@@ -4844,13 +4839,14 @@ var ICONS = {
         '<p class="award-rank-label">'+(u.type === 'badge' ? 'Новая награда:' : 'Новое достижение:')+'</p>'+
         '<p class="award-rank" style="font-size:1.1rem;">'+u.name+'</p>';
     }).join('');
-    var giftFriend = FRIENDS[friendIdx];
-    var giftHtml = giftFriend
-      ? '<div class="friend-gift">'+
-          '<p class="award-rank-label">🎁 '+(isNewFriend ? 'Подарок — новый друг в альбоме!' : 'Твой друг за этот уровень')+'</p>'+
-          '<button class="friend-card friend-card-gift" data-action="show-friend" data-i="'+friendIdx+'">'+
-            '<span class="friend-pic">'+friendPic(friendIdx, 'friend-img')+'</span>'+
-            '<span class="friend-name">'+giftFriend.name+'</span>'+
+    var giftPuzzle = PUZZLES[puzzleIdx];
+    var giftHtml = giftPuzzle
+      ? '<div class="gift-box">'+
+          '<p class="award-rank-label">🎁 '+(isNewPuzzle ? 'Подарок — пазл для печати!' : 'Твой пазл за этот уровень')+'</p>'+
+          '<button class="gift-card gift-card-big" data-action="show-puzzle" data-i="'+puzzleIdx+'">'+
+            '<span class="gift-thumb">'+puzzleThumb(puzzleIdx, 'gift-img')+'</span>'+
+            '<span class="gift-name">'+giftPuzzle.name+'</span>'+
+            '<span class="gift-sub">'+puzzlePieces(puzzleIdx)+' '+piecesWord(puzzlePieces(puzzleIdx))+'</span>'+
           '</button>'+
         '</div>'
       : '';
@@ -6053,9 +6049,9 @@ var ICONS = {
       case 'start-topic': startTopicBatch(el.dataset.topic); break;
       case 'go-home': renderHome(); break;
       case 'paywall-open-bot': openBotFromPaywall(); break;
-      case 'show-friends': renderFriendsAlbum(); break;
-      case 'show-friend': showFriendModal(parseInt(el.dataset.i, 10)); break;
-      case 'save-friend-card': saveFriendCard(parseInt(el.dataset.i, 10)); break;
+      case 'show-puzzles': renderPuzzlesAlbum(); break;
+      case 'show-puzzle': showPuzzleModal(parseInt(el.dataset.i, 10)); break;
+      case 'open-puzzle': openPuzzle(parseInt(el.dataset.i, 10)); break;
       case 'go-prev-round': goToPreviousRound(); break;
       case 'save-name':
         (function(){
