@@ -319,7 +319,7 @@ img { display: block; max-width: 100%; }
 <body>
 <div id="app"><div class="loading">Совёнок Тим просыпается…</div></div>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="data.js?v=2234032c"></script>
+<script src="data.js?v=5a014da9"></script>
 <script>
 (function () {
 "use strict";
@@ -370,6 +370,7 @@ function save(key) {
 }
 function core() {
   if (!S.core) S.core = { name: null, stars: 0, streak: 0, last: 0, gd: 0, gn: 0, lv: {}, voice: 1, asked: 0 };
+  if (!S.core.lv) S.core.lv = {};  // прогресс из облака мог прийти неполным
   return S.core;
 }
 // SHA-256 (ASCII) — свой, синхронный: crypto.subtle есть не во всех WebView Telegram.
@@ -654,6 +655,56 @@ function showLock() {
 function rankIdx(stars) { return island(stars === undefined ? core().stars : stars).idx; }
 function rankName(i) { return D.ranks[i === undefined ? rankIdx() : i]; }
 function cnt() { var c = core(); return c.cnt || (c.cnt = { games: 0, run: 0, order: 0, match: 0 }); }
+
+/* ---------- подписка ---------- */
+// Бот после оплаты даёт пропуск «id.срок.подпись» (ECDSA P-256); здесь проверяем подпись
+// открытым ключом D.accessPub — подделать или продлить пропуск, поправив число, нельзя.
+var PAY_UNTIL = 0;  // мс: до когда оплачено
+function b64u(s) {
+  s = String(s).replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "=";
+  var b = atob(s), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a;
+}
+function checkPass(tok) {
+  try {
+    var p = String(tok || "").split(".");
+    if (p.length !== 3 || !window.crypto || !crypto.subtle || !D.accessPub) return Promise.resolve(0);
+    if (TG_ID && String(TG_ID) !== p[0]) return Promise.resolve(0);  // чужой пропуск
+    return crypto.subtle.importKey("raw", b64u(D.accessPub), { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"])
+      .then(function (k) { return crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, k, b64u(p[2]), new TextEncoder().encode("tim1:" + p[0] + ":" + p[1])); })
+      .then(function (ok) { return ok ? +p[1] * 1000 : 0; })
+      .catch(function () { return 0; });
+  } catch (e) { return Promise.resolve(0); }
+}
+// Пропуск из адреса (бот кладёт его в кнопку игры) запоминаем в облаке — он нужен и при входе через «Играть».
+function loadPass() {
+  var fromUrl = new URLSearchParams(location.search).get("p"), saved = core().pay;
+  return Promise.all([checkPass(fromUrl), checkPass(saved)]).then(function (r) {
+    if (r[0] && r[0] > r[1]) { core().pay = fromUrl; save("core"); }
+    PAY_UNTIL = Math.max(r[0], r[1]);
+  });
+}
+function isPaid() { return ADMIN || PAY_UNTIL > Date.now(); }
+function freeLeft() { return Math.max(0, D.freeGames - cnt().games); }
+function payDate() { var d = new Date(PAY_UNTIL); return ("0" + d.getDate()).slice(-2) + "." + ("0" + (d.getMonth() + 1)).slice(-2) + "." + d.getFullYear(); }
+function renderPaywall() {
+  view = "paywall";
+  var expired = PAY_UNTIL > 0;
+  $app.innerHTML = '<div class="screen result">' +
+    '<img class="big" src="' + M(expired ? "hug_heart" : "backpack") + '" alt="">' +
+    "<h2>" + (expired ? "Подписка закончилась" : "Бесплатные игры закончились") + "</h2>" +
+    '<p class="muted" style="font-size:17px;max-width:32ch">' + (expired
+      ? "Совёнок Тим скучает! Продлите подписку — и полетим дальше, остров за островом."
+      : "Понравилось? Дальше — вся Школа Мудрых Сов: 8 островов, " + D.tasks.length + " заданий, звания, медали, раскраски и именной диплом.") + "</p>" +
+    '<div class="card" style="text-align:center;display:grid;gap:6px;width:100%"><b style="font-size:26px">' + D.price + " ₽ в месяц</b>" +
+    '<small class="muted">Оплата картой или через СБП в чате с ботом. Без автосписаний: за 3 дня до конца месяца бот напомнит о продлении.</small></div>' +
+    '<button class="btn b-violet" type="button" data-subscribe>' + (expired ? "Продлить подписку" : "Оформить подписку") + "</button>" +
+    '<button class="btn-white" type="button" data-go="home">На главную</button></div>';
+}
+function openCheckout() {
+  var url = "https://t.me/" + D.bot + "?start=buy";
+  try { tg.openTelegramLink(url); } catch (e) { location.href = url; }
+  layer("<h3>Открываем оплату 💳</h3><p>В чате с ботом нажмите «Оплатить». После оплаты бот пришлёт кнопку <b>«🦉 Играть дальше»</b> — нажмите её, и школа откроется.</p><button class=\"btn b-violet\" type=\"button\" data-close>Понятно</button>");
+}
 function medalsGot() { var c = core(); return c.medals || (c.medals = {}); }
 var MEDAL_RULES = {
   first_game: function (c, n) { return n.games >= 1; },
@@ -758,6 +809,7 @@ function render() {
   else if (view === "graduation") renderGraduation();
   else if (view === "game") renderTask();
   else if (view === "catalog") renderCatalog();
+  else if (view === "paywall") renderPaywall();
 }
 
 function renderName() {
@@ -780,7 +832,7 @@ function renderHome() {
     '<div style="display:flex;gap:8px;align-items:center;margin-left:auto">' + pillHtml() + soundBtn() +
     '<button class="icon-btn" type="button" data-timer aria-label="Таймер занятия"><img src="' + IMG("03_ui/06_topic_time") + '" alt=""></button></div></div>' +
     '<div class="talk"><img class="owl" src="' + M(left > 0 ? "wave" : "sleeping_nest") + '" alt=""><div class="bubble">' + esc(c.name ? c.name + ", " + bubble[0].toLowerCase() + bubble.slice(1) : bubble) + "</div></div>" +
-    '<div class="title"><h1>Совёнок Тим</h1><p>Остров «' + esc(stripEmoji(isl.name)) + "» · " + (ADMIN ? "без ограничений" : "игр сегодня " + used + " из " + perDay()) + '</p><span class="rank"><img src="' + IMG(D.ui.islands[isl.idx]) + '" alt="">' + esc(rankName(isl.idx)) + "</span></div>" +
+    '<div class="title"><h1>Совёнок Тим</h1><p>Остров «' + esc(stripEmoji(isl.name)) + "» · " + (ADMIN ? "без ограничений" : isPaid() ? "игр сегодня " + used + " из " + perDay() : "бесплатно: осталось " + freeLeft() + " из " + D.freeGames) + '</p><span class="rank"><img src="' + IMG(D.ui.islands[isl.idx]) + '" alt="">' + esc(rankName(isl.idx)) + "</span></div>" +
     '<button class="hero-card b-violet" type="button" data-play' + (left > 0 ? "" : " disabled") + ">" +
     "<h2>" + (left > 0 ? "Играть!" : "До завтра!") + "</h2><p>" + (left > 0 ? D.perSession + " заданий · около 10 минут" : "Новые игры откроются завтра") + "</p>" +
     '<img class="owl" src="' + M(left > 0 ? "flying" : "sleeping_nest") + '" alt=""></button>' +
@@ -819,6 +871,7 @@ function renderMap() {
 /* ---------- игра ---------- */
 function startGame() {
   if (TIMER().locked) { showLock(); return; }
+  if (!isPaid() && freeLeft() <= 0) { renderPaywall(); return; }
   if (gamesToday() >= perDay()) { render(); play(D.say.tired); return; }
   var c = core(), today = dayNum();
   if (c.gd !== today) { c.gd = today; c.gn = 0; }
@@ -1205,6 +1258,8 @@ function renderParents() {
     '<div class="setting"><span>⏱ Таймер: ' + tlabel + '</span><button class="s" type="button" data-timer>Настроить</button></div>' +
     '<div class="setting"><span>🔊 Озвучка</span><button class="s" type="button" data-voice>' + (c.voice ? "Выключить" : "Включить") + "</button></div>" +
     '<div class="setting"><span>✏️ Имя: ' + (c.name ? esc(c.name) : "не указано") + '</span><button class="s" type="button" data-rename>Изменить</button></div>' +
+    (ADMIN ? "" : '<div class="setting"><span>💳 ' + (isPaid() ? "Подписка до " + payDate() : "Бесплатно: осталось " + freeLeft() + " из " + D.freeGames + " игр") +
+      '</span><button class="s" type="button" data-subscribe>' + (isPaid() ? "Продлить" : "Оформить") + "</button></div>") +
     (ADMIN ? "" : '<div class="setting"><span>🔑 Режим проверки</span><button class="s" type="button" data-admcode>Ввести код</button></div>') +
     (ADMIN ? '<div class="setting"><span>📋 Все задания (проверка)</span><button class="s" type="button" data-cat="">Открыть</button></div>' : "") +
     (ADMIN ? '<div class="setting"><span>🎓 Выпускной (проверка)</span><button class="s" type="button" data-gradpreview>Показать</button></div>' : "") +
@@ -1285,6 +1340,7 @@ $app.addEventListener("click", function (e) {
   if ("gradpreview" in ds) { renderGraduation(); return; }
   if (ds.cat !== undefined) { catBlock = ds.cat || null; view = "catalog"; render(); var s2 = document.querySelector(".screen"); if (s2) s2.scrollTop = 0; return; }
   if (ds.checktask) { checkGame(ds.checktask); return; }
+  if ("subscribe" in ds) { openCheckout(); return; }
   if ("admcode" in ds) {
     var lc = layer('<h3>Код проверки</h3><p>Включает режим проверки: все задания, карта и без лимита игр.</p>' +
       '<input class="name-input" type="text" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Код" data-codein style="width:100%;box-sizing:border-box;padding:12px;border:2px solid rgba(110,90,200,.3);border-radius:16px;text-align:center;font-size:24px;font-weight:800;margin:10px 0">' +
@@ -1346,6 +1402,7 @@ if (tg) {
   try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) {}
 }
 load(function () {
+  loadPass().then(function () { if (view === "home" || view === "parents") render(); });
   if (TIMER().ends && Date.now() >= TIMER().ends) { TIMER().locked = 1; TIMER().ends = 0; save("timer"); }
   render();
   if (TIMER().locked) showLock();
