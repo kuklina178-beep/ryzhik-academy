@@ -664,14 +664,13 @@
    * доступа и режим: «full» (оплачено) или «demo» + момент старта демо.
    * Принимается только токен с верной подписью И с ID, совпадающим с тем,
    * кто реально открыл игру в Telegram — подделанную или чужую ссылку игра
-   * не примет. Старт демо ("s") задаёт БОТ (storage.demo_started_at), здесь
-   * только отсчитываются 24 часа от него. Без токена (страница открыта
-   * напрямую) доступа нет — его выдаёт только бот.
+   * не примет. Демо — это бесплатный уровень 1 «Первые шаги» без ограничения
+   * по времени (поле "s" — когда бот впервые выдал демо, только для учёта).
+   * Без токена (страница открыта напрямую) доступа нет — его выдаёт только бот.
    * Проверка подписи асинхронная, поэтому первый экран рисуется после
    * accessReady (см. конец скрипта). Меняете ключ — обновите JWK и
    * задеплойте игру заново, иначе все выданные ссылки перестанут работать. */
   var ACCESS_LS_KEY = 'ryzhik_access_v2';
-  var DEMO_HOURS = 24;
   var ACCESS_PUBLIC_JWK = {kty:'EC', crv:'P-256',
     x:'152r6jHQ2vT65CDSBYByLoOPrYgyY95MKOWtHGKc-iY',
     y:'OvX1_3Gt12VosX0wTeUdduia0UMw9CFtDc_WL7Gfklc'};
@@ -741,49 +740,34 @@
     }).catch(function(){ ACCESS = {mode:'none', startedAt:0}; });
   })();
 
-  function isDemoExpired(){
-    return !ACCESS.startedAt || (Date.now() - ACCESS.startedAt) > DEMO_HOURS * 3600 * 1000;
-  }
   function hasFullAccess(){ return ACCESS.mode === 'full'; }
-  // Есть ли хоть какой-то доступ прямо сейчас (полный ИЛИ активное демо).
-  function hasAnyAccess(){
-    if(ACCESS.mode === 'full') return true;
-    if(ACCESS.mode === 'demo') return !isDemoExpired();
-    return false;
-  }
+  function isDemo(){ return ACCESS.mode === 'demo'; }
+  // Есть ли хоть какой-то доступ (полный ИЛИ бесплатный уровень 1 — бессрочно).
+  function hasAnyAccess(){ return ACCESS.mode === 'full' || ACCESS.mode === 'demo'; }
   // Почему показан экран оплаты: 'noaccess' — игру открыли не из бота (нет
-  // действительной ссылки), 'expired' — демо закончилось, 'locked' — часть
-  // игры, которой нет в демо.
-  function paywallReason(){
-    if(hasAnyAccess()) return 'locked';
-    return ACCESS.mode === 'demo' ? 'expired' : 'noaccess';
-  }
-  // Уровень 1 разрешён и в демо, и при полном доступе; остальные 24 — только
-  // при полном доступе. Раздел "Цифры 11-100" (canAccessNumbersExt) и
-  // "Повторение" (canAccessReview) по той же логике не входят в демо-объём,
-  // который явно оговорён (алфавит, цифры 1-10, уровень 1).
+  // действительной ссылки), 'locked' — часть игры, которой нет в демо.
+  function paywallReason(){ return hasAnyAccess() ? 'locked' : 'noaccess'; }
+  // Демо = только уровень 1 «Первые шаги». Остальные 24 уровня, «Алфавит»,
+  // «Числа» и «Повторение» — после оплаты.
   function canAccessLevel(lv){
     if(hasFullAccess()) return true;
-    if(lv === 1) return hasAnyAccess();
-    return false;
+    return lv === 1 && hasAnyAccess();
   }
+  function canAccessSections(){ return hasFullAccess(); }
   function canAccessNumbersExt(){ return hasFullAccess(); }
   function canAccessReview(){ return hasFullAccess(); }
 
   function renderPaywallScreen(reason){
     state.screen = 'paywall';
     var title, body;
-    if(reason === 'expired'){
-      title = 'Бесплатный демо-урок закончился';
-      body = 'Демо-доступ на 24 часа истёк. Чтобы открыть все 25 уровней Академии, вернись в чат с ботом и нажми «Оплатить».';
-    } else if(reason === 'noaccess'){
+    if(reason === 'noaccess'){
       title = 'Открой Академию через бота';
       body = 'Игра открывается кнопкой «Открыть Академию» в чате с ботом. Вернись в чат и нажми её — так доступ привяжется к твоему аккаунту.';
     } else {
       title = 'Нужна оплата';
-      body = 'Это часть Академии открывается после оплаты. Вернись в чат с ботом и нажми «Оплатить», чтобы открыть все 25 уровней.';
+      body = 'Эта часть Академии открывается после оплаты. Бесплатно доступен первый уровень «Первые шаги». Вернись в чат с ботом и нажми «Оплатить», чтобы открыть все 25 уровней.';
     }
-    // «На главный экран» нужна только когда главный экран доступен (демо ещё идёт)
+    // «На главный экран» нужна только когда главный экран доступен (есть демо или оплата)
     var homeBtn = hasAnyAccess() ? '<button class="big-btn ghost" data-action="go-home">На главный экран</button>' : '';
     $('#app').innerHTML =
       '<div class="stage" style="align-items:center; justify-content:center; text-align:center; gap:16px;">'+
@@ -3597,7 +3581,7 @@ var ICONS = {
     // визуальная подсказка, но не блокирует переход.
     for(var lv=1; lv<=LEVEL_COUNT; lv++){
       var lcls = lv < state.curDay ? 'level-done' : (lv === state.curDay ? 'level-current' : 'level-locked');
-      // Демо-доступ открывает только уровень 1 — на остальных небольшой
+      // Бесплатно открыт только уровень 1 — на остальных небольшой
       // замочек рядом с названием, само нажатие всё равно уводит на
       // startDay(), который и покажет платный экран при попытке начать.
       var payLock = (!hasFullAccess() && lv > 1) ? ' 🔒' : '';
@@ -3635,6 +3619,13 @@ var ICONS = {
     var reviewBtn = '<button class="big-btn solid-berry" style="display:inline-flex; align-items:center; justify-content:center; gap:8px;" data-action="start-review">'+mediaTag(ICONS.section_review,'alphabet-btn-icon')+' Повторение</button>';
     // «Пазлы» — подарки за уровни: цветные пазлы А4 для печати (счётчик на кнопке)
     var puzzlesBtn = '<button class="big-btn" style="display:inline-flex; align-items:center; justify-content:center; gap:8px;" data-action="show-puzzles"><span class="alphabet-btn-icon emoji-media">🧩</span> Пазлы '+puzzlesCount()+'/'+PUZZLES.length+'</button>';
+    // В демо (бесплатен только уровень 1) разделы открываются после оплаты —
+    // на кнопках замочек, нажатие покажет экран оплаты.
+    if(!hasFullAccess()){
+      alphabetBtn = alphabetBtn.replace('Алфавит</button>', 'Алфавит 🔒</button>');
+      numbersBtn = numbersBtn.replace('Числа</button>', 'Числа 🔒</button>');
+      reviewBtn = reviewBtn.replace(' Повторение</button>', ' Повторение 🔒</button>');
+    }
     $('#app').innerHTML =
       '<div class="topbar">'+
         '<div class="topbar-mid">'+
@@ -5787,7 +5778,7 @@ var ICONS = {
   var NUM_PIC_FALLBACK = ['🥯','🌙','🦶','🍴','🐾','✋','🐞','🌈','🐙','9️⃣','🙌'];
   function numPicIcon(n){ return ICONS['num_pic_'+n] || NUM_PIC_FALLBACK[n]; }
   function renderNumbersScreen(){
-    if(!hasAnyAccess()){ renderPaywallScreen(paywallReason()); return; }
+    if(!canAccessSections()){ renderPaywallScreen(paywallReason()); return; }
     state.screen = 'numbers';
     function cell(n){
       return '<button class="alpha-cell" data-action="show-number" data-n="'+n+'">'+
@@ -5845,7 +5836,7 @@ var ICONS = {
       '</div>';
   }
   function renderAlphabetScreen(){
-    if(!hasAnyAccess()){ renderPaywallScreen(paywallReason()); return; }
+    if(!canAccessSections()){ renderPaywallScreen(paywallReason()); return; }
     state.screen = 'alphabet';
     logAlphabetEvent('view');
     var idx = buildAlphabetIndex();
