@@ -319,7 +319,7 @@ img { display: block; max-width: 100%; }
 <body>
 <div id="app"><div class="loading">Совёнок Тим просыпается…</div></div>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="data.js?v=5a014da9"></script>
+<script src="data.js?v=1faeffdf"></script>
 <script>
 (function () {
 "use strict";
@@ -684,14 +684,15 @@ function loadPass() {
   });
 }
 function isPaid() { return ADMIN || PAY_UNTIL > Date.now(); }
-function freeLeft() { return Math.max(0, D.freeGames - cnt().games); }
+function taskWord(n) { var m = n % 10, h = n % 100; if (m === 1 && h !== 11) return "задание"; if (m >= 2 && m <= 4 && (h < 12 || h > 14)) return "задания"; return "заданий"; }
+function freeLeft() { return Math.max(0, D.freeTasks - (cnt().tasks || 0)); }  // бесплатных заданий осталось
 function payDate() { var d = new Date(PAY_UNTIL); return ("0" + d.getDate()).slice(-2) + "." + ("0" + (d.getMonth() + 1)).slice(-2) + "." + d.getFullYear(); }
 function renderPaywall() {
   view = "paywall";
   var expired = PAY_UNTIL > 0;
   $app.innerHTML = '<div class="screen result">' +
     '<img class="big" src="' + M(expired ? "hug_heart" : "backpack") + '" alt="">' +
-    "<h2>" + (expired ? "Подписка закончилась" : "Бесплатные игры закончились") + "</h2>" +
+    "<h2>" + (expired ? "Подписка закончилась" : "Бесплатная игра закончилась") + "</h2>" +
     '<p class="muted" style="font-size:17px;max-width:32ch">' + (expired
       ? "Совёнок Тим скучает! Продлите подписку — и полетим дальше, остров за островом."
       : "Понравилось? Дальше — вся Школа Мудрых Сов: 8 островов, " + D.tasks.length + " заданий, звания, медали, раскраски и именной диплом.") + "</p>" +
@@ -832,7 +833,7 @@ function renderHome() {
     '<div style="display:flex;gap:8px;align-items:center;margin-left:auto">' + pillHtml() + soundBtn() +
     '<button class="icon-btn" type="button" data-timer aria-label="Таймер занятия"><img src="' + IMG("03_ui/06_topic_time") + '" alt=""></button></div></div>' +
     '<div class="talk"><img class="owl" src="' + M(left > 0 ? "wave" : "sleeping_nest") + '" alt=""><div class="bubble">' + esc(c.name ? c.name + ", " + bubble[0].toLowerCase() + bubble.slice(1) : bubble) + "</div></div>" +
-    '<div class="title"><h1>Совёнок Тим</h1><p>Остров «' + esc(stripEmoji(isl.name)) + "» · " + (ADMIN ? "без ограничений" : isPaid() ? "игр сегодня " + used + " из " + perDay() : "бесплатно: осталось " + freeLeft() + " из " + D.freeGames) + '</p><span class="rank"><img src="' + IMG(D.ui.islands[isl.idx]) + '" alt="">' + esc(rankName(isl.idx)) + "</span></div>" +
+    '<div class="title"><h1>Совёнок Тим</h1><p>Остров «' + esc(stripEmoji(isl.name)) + "» · " + (ADMIN ? "без ограничений" : isPaid() ? "игр сегодня " + used + " из " + perDay() : "бесплатно: " + freeLeft() + " " + taskWord(freeLeft()) + " из " + D.freeTasks) + '</p><span class="rank"><img src="' + IMG(D.ui.islands[isl.idx]) + '" alt="">' + esc(rankName(isl.idx)) + "</span></div>" +
     '<button class="hero-card b-violet" type="button" data-play' + (left > 0 ? "" : " disabled") + ">" +
     "<h2>" + (left > 0 ? "Играть!" : "До завтра!") + "</h2><p>" + (left > 0 ? D.perSession + " заданий · около 10 минут" : "Новые игры откроются завтра") + "</p>" +
     '<img class="owl" src="' + M(left > 0 ? "flying" : "sleeping_nest") + '" alt=""></button>' +
@@ -1130,6 +1131,7 @@ function finishTask(result, stars, text, pose, good) {
     recordAnswer(t, result);
     var n = cnt();
     n.run = result === 2 ? n.run + 1 : 0; n.best = Math.max(n.best || 0, n.run);
+    n.tasks = (n.tasks || 0) + 1;
     if (result > 0 && t.m === "order") n.order++;
     if (result > 0 && t.m === "match") n.match++;
     G.newMedals = (G.newMedals || []).concat(checkMedals());
@@ -1151,6 +1153,7 @@ function whyBtns(onlyNext) {
 function nextTask() {
   if (view !== "game" || !G || TIMER().locked || !G.cur || !G.cur.done) return;
   G.cur.done = false;  // защита от двойного перехода
+  if (!isPaid() && freeLeft() <= 0 && !G.check && G.idx + 1 < G.tasks.length) { G = null; renderPaywall(); return; }
   G.idx++;
   if (G.idx < G.tasks.length) { renderTask(); var sc = document.querySelector(".screen"); if (sc) sc.scrollTop = 0; }
   else if (G.check) { G = null; view = "catalog"; render(); }  // проверка заданий — назад к списку
@@ -1258,7 +1261,7 @@ function renderParents() {
     '<div class="setting"><span>⏱ Таймер: ' + tlabel + '</span><button class="s" type="button" data-timer>Настроить</button></div>' +
     '<div class="setting"><span>🔊 Озвучка</span><button class="s" type="button" data-voice>' + (c.voice ? "Выключить" : "Включить") + "</button></div>" +
     '<div class="setting"><span>✏️ Имя: ' + (c.name ? esc(c.name) : "не указано") + '</span><button class="s" type="button" data-rename>Изменить</button></div>' +
-    (ADMIN ? "" : '<div class="setting"><span>💳 ' + (isPaid() ? "Подписка до " + payDate() : "Бесплатно: осталось " + freeLeft() + " из " + D.freeGames + " игр") +
+    (ADMIN ? "" : '<div class="setting"><span>💳 ' + (isPaid() ? "Подписка до " + payDate() : "Бесплатно: " + freeLeft() + " " + taskWord(freeLeft()) + " из " + D.freeTasks) +
       '</span><button class="s" type="button" data-subscribe>' + (isPaid() ? "Продлить" : "Оформить") + "</button></div>") +
     (ADMIN ? "" : '<div class="setting"><span>🔑 Режим проверки</span><button class="s" type="button" data-admcode>Ввести код</button></div>') +
     (ADMIN ? '<div class="setting"><span>📋 Все задания (проверка)</span><button class="s" type="button" data-cat="">Открыть</button></div>' : "") +
