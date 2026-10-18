@@ -319,7 +319,7 @@ img { display: block; max-width: 100%; }
 <body>
 <div id="app"><div class="loading">Совёнок Тим просыпается…</div></div>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="data.js?v=bd54efac"></script>
+<script src="data.js?v=b3406ded"></script>
 <script>
 (function () {
 "use strict";
@@ -330,8 +330,12 @@ var IMG = function (k) { return "img/" + k + ".webp"; };
 var MASCOT = {};
 D.ui.mascot.forEach(function (k) { MASCOT[k.split("/")[1].replace(/^\d+_/, "")] = k; });
 var M = function (pose) { return IMG(MASCOT[pose] || MASCOT.wave); };
+// Постоянный код задания (4 знака base36 от названия): не меняется, когда в сборку добавляют задания.
+// Раньше история хранила номер задания в списке — после каждого обновления номера сдвигались,
+// и игра путала, что ребёнок уже видел.
+function taskCode(id) { var h = 2166136261; for (var i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 16777619); } return ("000" + ((h >>> 0) % 1679616).toString(36)).slice(-4); }
 var TASK_INDEX = {};
-D.tasks.forEach(function (t, i) { TASK_INDEX[t.id] = i; });
+D.tasks.forEach(function (t) { TASK_INDEX[t.id] = taskCode(t.id); });
 var INTERACTIVE = { order: 1, match: 1, parts: 1, sort: 1 };
 
 /* ---------- время (по Москве) ---------- */
@@ -340,14 +344,14 @@ function dayNum(ts) { return Math.floor(((ts || Date.now()) + 3 * 3600000) / DAY
 
 /* ---------- хранилище: Telegram CloudStorage + запасная копия в localStorage ---------- */
 var KEYS = ["core", "seen", "stats", "timer"];
-var S = { core: null, seen: [], stats: {}, timer: null };
+var S = { core: null, seen: {}, stats: {}, timer: null };
 var cloudOk = !!(tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast("6.9"));
 function lsGet(k) { try { return localStorage.getItem("tim_" + k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem("tim_" + k, v); } catch (e) {} }
 function parse(v, def) { try { return v ? JSON.parse(v) : def; } catch (e) { return def; } }
 function load(cb) {
   function apply(vals) {
-    S.core = parse(vals.core, null); S.seen = parse(vals.seen, []); S.stats = parse(vals.stats, {}); S.timer = parse(vals.timer, null);
+    S.core = parse(vals.core, null); S.seen = parse(vals.seen, {}); if (Array.isArray(S.seen)) S.seen = {}; S.stats = parse(vals.stats, {}); S.timer = parse(vals.timer, null);
     cb();
   }
   var local = {};
@@ -477,7 +481,15 @@ function img(k, cls) { return '<img class="tile-img' + (cls ? " " + cls : "") + 
 var BY_BLOCK = {};
 D.tasks.forEach(function (t) { (BY_BLOCK[t.b] = BY_BLOCK[t.b] || []).push(t); });
 // Задание → день, когда его видели последний раз (за 14 дней).
-function seenSet() { var s = {}, from = dayNum() - 14; S.seen.forEach(function (p) { if (p[1] >= from) s[p[0]] = p[1] + 1; }); return s; }
+// История — по дням: {день: "коды подряд"} (компактно: облако Telegram хранит до 4096 знаков на запись).
+function seenSet() {
+  var s = {}, from = dayNum() - 14;
+  Object.keys(S.seen).map(Number).sort(function (a, b) { return a - b; }).forEach(function (d) {
+    if (d < from) return; var codes = S.seen[d] || "";
+    for (var i = 0; i + 4 <= codes.length; i += 4) s[codes.substr(i, 4)] = d + 1;
+  });
+  return s;
+}
 // Когда невиденных не осталось — то, что видели давнее всего (а не случайное вчерашнее).
 function oldest(list, seen) {
   var min = Infinity; list.forEach(function (t) { min = Math.min(min, seen[TASK_INDEX[t.id]] || 0); });
@@ -544,9 +556,11 @@ function recordAnswer(task, result) {
   r[0]++; if (result === 2) r[1]++;
   var keep = dayNum() - 14;
   Object.keys(S.stats).forEach(function (k) { if (+k < keep) delete S.stats[k]; });
-  var idx = TASK_INDEX[task.id];
-  S.seen = S.seen.filter(function (p) { return p[0] !== idx && p[1] >= keep; });
-  S.seen.push([idx, dayNum()]);
+  var code = TASK_INDEX[task.id], today = String(dayNum());
+  Object.keys(S.seen).forEach(function (k) { if (+k < keep) delete S.seen[k]; });
+  var cur = S.seen[today] || "", dup = false;
+  for (var i = 0; i + 4 <= cur.length; i += 4) if (cur.substr(i, 4) === code) dup = true;
+  if (!dup) S.seen[today] = cur + code;
   updateLevel(task.b, result);
 }
 
@@ -1278,7 +1292,7 @@ function changePerDay(delta) {
 }
 function resetAll() {
   adultLayer("Сбросить звёзды, острова и статистику? Подтвердите:", function () {
-    S.core = null; S.seen = []; S.stats = {}; KEYS.forEach(function (k) { if (k !== "timer") save(k); });
+    S.core = null; S.seen = {}; S.stats = {}; KEYS.forEach(function (k) { if (k !== "timer") save(k); });
     view = "home"; render();
   });
 }
