@@ -150,7 +150,9 @@ h1 {
 .toast.miss .t1 { color: var(--red); }
 
 /* Хотбар дней */
-.hotbar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: #000; padding: 4px; border: 3px solid #000; }
+.bonus { font-size: .95rem; font-weight: 500; color: var(--ink-soft); }
+.bonus b { color: #2F5A14; }
+.hotbar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: #000; padding: 4px; border: 3px solid #000; }
 .day {
   background: #8B8B8B; border: 3px solid; border-color: #373737 #FFFFFF #FFFFFF #373737;
   cursor: pointer; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -161,6 +163,10 @@ h1 {
 .day.sel { border-color: #FFFFFF; box-shadow: inset 0 0 0 3px #000; background: #A9A9A9; }
 .day.today .dn { color: var(--gold); }
 .day.full { background: #6E9E46; }
+.day.weekend { background: #7D6A9E; }
+.day.weekend.sel { background: #9A87BC; }
+.day.weekend.full { background: #6E9E46; }
+th.we { color: #6A4F99; }
 
 .daybar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .cnt { font-weight: 700; color: var(--ink-soft); }
@@ -181,11 +187,22 @@ h1 {
 .task.done { background: #6E9E46; border-color: #2F5A14 #B8E68F #B8E68F #2F5A14; }
 .task.done .tick { opacity: 1; }
 .task.pop .tick { animation: pop .45s steps(5); }
+.task.part { background: #9AAE86; }
+.pips { display: flex; gap: 6px; margin-top: -2px; }
+.pips i { width: 22px; height: 22px; display: block; opacity: .3; filter: grayscale(1); }
+.pips i.on { opacity: 1; filter: none; }
+.pips svg { width: 100%; height: 100%; }
+.cell { position: relative; }
+.cnt-badge {
+  position: absolute; right: -2px; bottom: -4px; font-family: var(--font-num); font-size: .55rem;
+  color: #FFFFFF; text-shadow: 2px 2px 0 #3F3F3F;
+}
+.cell.on:not(.full) svg { opacity: .55; }
 @keyframes pop { 0% { transform: scale(.2); } 60% { transform: scale(1.5); } 100% { transform: scale(1); } }
 
 /* Сундук недели */
 .chest-scroll { overflow-x: auto; }
-table { border-collapse: separate; border-spacing: 3px; width: 100%; min-width: 330px; }
+table { border-collapse: separate; border-spacing: 3px; width: 100%; min-width: 380px; }
 th { font-family: var(--font-num); font-size: .62rem; color: var(--ink-soft); font-weight: 400; padding: 4px 0; }
 td.name { text-align: left; font-weight: 700; font-size: .95rem; white-space: nowrap; padding-right: 6px; }
 td { text-align: center; }
@@ -236,6 +253,7 @@ tfoot td { font-family: var(--font-num); font-size: .7rem; padding-top: 6px; }
       <div class="slot bigstar"><span id="bigStarIco"></span><span class="num" id="total">0</span></div>
       <div class="score-text">
         <div class="hint" id="hint"></div>
+        <div class="bonus" id="bonus"></div>
         <div class="xp-wrap">
           <div class="xp-level" id="xpLevel">0</div>
           <div class="xp" id="xp" role="progressbar" aria-valuemin="0" aria-valuemax="30"></div>
@@ -463,8 +481,8 @@ const TASKS = [
   { id: "speech",  name: "Логопед",      short: "Логопед" },
   { id: "app",     name: "Приложение",   short: "Прилож." },
   { id: "sport",   name: "Спорт",        short: "Спорт" },
-  { id: "water",   name: "Вода",         short: "Вода" },
-  { id: "cat",     name: "Покормить кота", short: "Кот" },
+  { id: "water",   name: "Вода",         short: "Вода", max: 3 }, // 3 баночки — 3 звезды
+  { id: "cat",     name: "Покормить кота", short: "Кот", max: 3 }, // 3 кормления — 3 звезды
 ];
 const DAYS = [
   { id: "mon", name: "Понедельник", short: "ПН" },
@@ -472,9 +490,12 @@ const DAYS = [
   { id: "wed", name: "Среда",       short: "СР" },
   { id: "thu", name: "Четверг",     short: "ЧТ" },
   { id: "fri", name: "Пятница",     short: "ПТ" },
+  { id: "sat", name: "Суббота",     short: "СБ", weekend: true },
+  { id: "sun", name: "Воскресенье", short: "ВС", weekend: true },
 ];
-const MAX = TASKS.length * DAYS.length; // 40
+const WORK = DAYS.filter(d => !d.weekend), WEEKEND = DAYS.filter(d => d.weekend);
 const GOAL = 30; // от стольких звёзд в субботу мультики, меньше — без мультиков
+// К субботе считаются: звёзды пн–пт этой недели + бонус за сб и вс прошлой недели.
 
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, "0");
@@ -494,10 +515,11 @@ const now = new Date();
 const thisMonday = mondayOf(now);
 const todayIdx = (now.getDay() + 6) % 7;
 let monday = thisMonday;
-let selDay = Math.min(todayIdx, 4);
-let done = {};
+let selDay = todayIdx;
+let done = {};      // отметки этой недели
+let prevDone = {};  // отметки прошлой недели (нужны её сб и вс)
 let dirty = false, saveTimer = null, chain = Promise.resolve();
-let db = null, unsub = null, readOnly = false;
+let db = null, unsub = null, unsubPrev = null, readOnly = false;
 
 // ---------- Хранилище: db артефакта, иначе память браузера ----------
 function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
@@ -505,11 +527,21 @@ function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch
 
 function loadWeek() {
   if (unsub) { unsub(); unsub = null; }
+  if (unsubPrev) { unsubPrev(); unsubPrev = null; }
   clearTimeout(saveTimer); dirty = false;
   const key = weekKey(monday);
+  const prevKey = weekKey(addDays(monday, -7));
   done = lsGet("week:" + key) || {};
+  prevDone = lsGet("week:" + prevKey) || {};
   render();
   if (!db) return;
+  unsubPrev = db.doc("weeks/" + prevKey).onSnapshot(snap => {
+    if (weekKey(monday) !== key) return;
+    const body = snap.exists ? snap.data() : null;
+    prevDone = body && body.done ? JSON.parse(JSON.stringify(body.done)) : {};
+    lsSet("week:" + prevKey, prevDone);
+    render();
+  }, () => {});
   unsub = db.doc("weeks/" + key).onSnapshot(snap => {
     if (dirty || weekKey(monday) !== key) return;
     const body = snap.exists ? snap.data() : null;
@@ -538,16 +570,25 @@ function scheduleSave() {
 }
 function setStatus(t) { $("status").textContent = t; }
 
-const isOn = (d, t) => !!(done[d] && done[d][t]);
-const dayCount = d => TASKS.filter(t => isOn(d, t.id)).length;
-const total = () => DAYS.reduce((s, d) => s + dayCount(d.id), 0);
+// Отметка: true (1 раз) или число 1..max для дел, которые делают несколько раз в день.
+const maxOf = id => (TASKS.find(t => t.id === id) || {}).max || 1;
+const val = (d, t, src = done) => { const v = src[d] && src[d][t]; return v === true ? 1 : Math.min(+v || 0, maxOf(t)); };
+const isOn = (d, t, src = done) => val(d, t, src) > 0;
+const DAY_MAX = TASKS.reduce((s, t) => s + (t.max || 1), 0);
+const dayCount = (d, src = done) => TASKS.reduce((s, t) => s + val(d, t.id, src), 0);
+const sumDays = (days, src) => days.reduce((s, d) => s + dayCount(d.id, src), 0);
+const bonusIn = () => sumDays(WEEKEND, prevDone);   // сб+вс прошлой недели
+const bonusOut = () => sumDays(WEEKEND, done);      // сб+вс этой недели, уйдут в следующую
+const total = () => sumDays(WORK, done) + bonusIn(); // звёзды к этой субботе
 
 function toggle(dayId, taskId) {
   done[dayId] = Object.assign({}, done[dayId]);
-  if (done[dayId][taskId]) delete done[dayId][taskId]; else done[dayId][taskId] = true;
-  const on = !!done[dayId][taskId];
+  const max = maxOf(taskId), cur = val(dayId, taskId);
+  const next = (cur + 1) % (max + 1); // после последнего нажатия — снова 0
+  if (!next) delete done[dayId][taskId];
+  else done[dayId][taskId] = max === 1 ? true : next;
   render();
-  if (on && dayId === DAYS[selDay].id) {
+  if (next && dayId === DAYS[selDay].id) {
     const el = document.querySelector(`.task[data-t="${taskId}"]`);
     if (el) { el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
   }
@@ -562,8 +603,8 @@ function render() {
   const n = total();
   const got = n >= GOAL;
   const isThisWeek = weekKey(monday) === weekKey(thisMonday);
-  const fri = addDays(monday, 4);
-  $("range").textContent = `${monday.getDate()} ${MONTHS[monday.getMonth()]} – ${fri.getDate()} ${MONTHS[fri.getMonth()]}`;
+  const sun = addDays(monday, 6);
+  $("range").textContent = `${monday.getDate()} ${MONTHS[monday.getMonth()]} – ${sun.getDate()} ${MONTHS[sun.getMonth()]}`;
   $("next").disabled = isThisWeek;
   $("total").textContent = n;
 
@@ -571,6 +612,9 @@ function render() {
   $("hint").innerHTML = got
     ? `<b>${stars(n)}!</b> В субботу будут мультики!`
     : `<b>${stars(n)}</b> из ${GOAL}. Ещё ${stars(left)} — и в субботу будут мультики.`;
+  const bi = bonusIn(), bo = bonusOut();
+  $("bonus").innerHTML = `Бонус с прошлых выходных: <b>+${bi}</b>` +
+    (bo ? ` · В следующую неделю: <b>+${bo}</b>` : ` · Звёзды за СБ и ВС пойдут в следующую неделю`);
   $("xpLevel").textContent = `${Math.min(n, GOAL)}/${GOAL}`;
   $("xp").setAttribute("aria-valuenow", Math.min(n, GOAL));
   $("xp").innerHTML = Array.from({ length: GOAL }, (_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("");
@@ -584,28 +628,36 @@ function render() {
     $("satTitle").textContent = got ? "Достижение получено!" : "Не хватило звёзд";
     $("satPrize").textContent = got ? "Суббота — день мультиков!" : "В эту субботу без мультиков";
     $("satNote").textContent = isThisWeek
-      ? `Собрано ${stars(n)} из ${GOAL}.` + (got ? "" : " На следующей неделе получится!")
-      : `Итог недели: ${stars(n)}.`;
+      ? `Собрано ${stars(n)} из ${GOAL} (пн–пт и бонус +${bonusIn()}).` + (got ? "" : " На следующей неделе получится!")
+      : `К субботе было ${stars(n)}.`;
   }
 
   $("days").innerHTML = DAYS.map((d, i) => {
-    const cls = ["day", i === selDay ? "sel" : "", isThisWeek && i === todayIdx ? "today" : "", dayCount(d.id) === TASKS.length ? "full" : ""].join(" ");
-    return `<button class="${cls}" role="tab" aria-selected="${i === selDay}" data-i="${i}"><span class="dn">${d.short}</span><span class="ds">${dayCount(d.id)}/${TASKS.length}</span></button>`;
+    const cls = ["day", d.weekend ? "weekend" : "", i === selDay ? "sel" : "", isThisWeek && i === todayIdx ? "today" : "", dayCount(d.id) === DAY_MAX ? "full" : ""].join(" ");
+    return `<button class="${cls}" role="tab" aria-selected="${i === selDay}" data-i="${i}"><span class="dn">${d.short}</span><span class="ds">${dayCount(d.id)}/${DAY_MAX}</span></button>`;
   }).join("");
 
   const d = DAYS[selDay];
   const date = addDays(monday, selDay);
   $("dayTitle").textContent = `${d.name}, ${date.getDate()} ${MONTHS[date.getMonth()]}`;
   const c = dayCount(d.id);
-  $("dayCnt").textContent = c === TASKS.length ? "Все звёзды за день!" : `${c} из ${TASKS.length}`;
+  $("dayCnt").textContent = c === DAY_MAX ? "Все звёзды за день!" : `${c} из ${DAY_MAX}`;
   $("tasks").innerHTML = TASKS.map(t => {
-    const on = isOn(d.id, t.id);
-    return `<button class="task ${on ? "done" : ""}" data-t="${t.id}" aria-pressed="${on}">${CHECK}${px(t.id, "ico")}<span class="lbl">${t.name}</span></button>`;
+    const v = val(d.id, t.id), max = t.max || 1, full = v === max;
+    const pips = max > 1
+      ? `<span class="pips" aria-hidden="true">${Array.from({ length: max }, (_, i) => `<i class="${i < v ? "on" : ""}">${px(t.id)}</i>`).join("")}</span>`
+      : "";
+    const label = max > 1 ? `${t.name}: ${v} из ${max}` : t.name;
+    return `<button class="task ${full ? "done" : v ? "part" : ""}" data-t="${t.id}" aria-pressed="${full}" aria-label="${label}">${CHECK}${px(t.id, "ico")}<span class="lbl">${t.name}</span>${pips}</button>`;
   }).join("");
 
-  $("thead").innerHTML = `<th></th>` + DAYS.map(d => `<th>${d.short}</th>`).join("");
+  $("thead").innerHTML = `<th></th>` + DAYS.map(d => `<th class="${d.weekend ? "we" : ""}">${d.short}</th>`).join("");
   $("tbody").innerHTML = TASKS.map(t => `<tr><td class="name">${t.short}</td>` +
-    DAYS.map(d => `<td><button class="cell ${isOn(d.id, t.id) ? "on" : ""}" data-d="${d.id}" data-t="${t.id}" aria-label="${t.name}, ${d.name}" aria-pressed="${isOn(d.id, t.id)}">${STAR}</button></td>`).join("") + `</tr>`).join("");
+    DAYS.map(d => {
+      const v = val(d.id, t.id), max = t.max || 1;
+      const badge = max > 1 && v ? `<span class="cnt-badge">${v}</span>` : "";
+      return `<td><button class="cell ${v ? "on" : ""} ${max > 1 && v === max ? "full" : ""}" data-d="${d.id}" data-t="${t.id}" aria-label="${t.name}, ${d.name}${max > 1 ? `: ${v} из ${max}` : ""}" aria-pressed="${v > 0}">${STAR}${badge}</button></td>`;
+    }).join("") + `</tr>`).join("");
   $("tfoot").innerHTML = `<td class="name">Звёзды</td>` + DAYS.map(d => `<td>${dayCount(d.id)}</td>`).join("");
 }
 
@@ -616,7 +668,7 @@ $("prev").addEventListener("click", () => { monday = addDays(monday, -7); selDay
 $("next").addEventListener("click", () => {
   if (weekKey(monday) === weekKey(thisMonday)) return;
   monday = addDays(monday, 7);
-  selDay = weekKey(monday) === weekKey(thisMonday) ? Math.min(todayIdx, 4) : 0;
+  selDay = weekKey(monday) === weekKey(thisMonday) ? todayIdx : 0;
   loadWeek();
 });
 $("reset").addEventListener("click", () => { $("confirm").hidden = false; $("reset").hidden = true; });
