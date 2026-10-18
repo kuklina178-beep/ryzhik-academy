@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#5DA130">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Звёзды">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath fill='%23FCDB05' stroke='%231B1B1B' stroke-width='.8' d='M6 .6l1.5 3.3 3.6.4-2.7 2.4.8 3.6L6 8.5 2.8 10.3l.8-3.6L.9 4.3l3.6-.4z'/%3E%3C/svg%3E">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body><title>Звёздная неделя</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Press+Start+2P&display=swap">
+<style>
+/* Layout: кубический мир — шапка-блок травы, под ней окно «инвентаря» из серого камня: счёт и шкала опыта, хотбар дней, ячейки дел, сундук недели. Единый «дневной» вид в обеих темах. */
+:root {
+  color-scheme: light;
+  --dirt: #6B4A2F;
+  --dirt-dark: #4A3220;
+  --grass: #5DA130;
+  --grass-dark: #3F7A1E;
+  --panel: #C6C6C6;
+  --panel-hi: #FFFFFF;
+  --panel-lo: #555555;
+  --slot: #8B8B8B;
+  --slot-hi: #FFFFFF;
+  --slot-lo: #373737;
+  --ink: #3F3F3F;
+  --ink-soft: #5A5A5A;
+  --gold: #FCDB05;
+  --xp: #80FF20;
+  --xp-dark: #2D7A00;
+  --done: #5DA130;
+  --toast: #212121;
+  --red: #FF5555;
+  --font-px: "Rubik", "Segoe UI", system-ui, sans-serif;
+  --font-num: "Press Start 2P", "Courier New", monospace;
+}
+* { box-sizing: border-box; }
+html { background: var(--dirt-dark); }
+body {
+  background-color: var(--dirt);
+  background-size: 64px 64px;
+  image-rendering: pixelated;
+  color: var(--ink);
+  font-family: var(--font-px);
+  font-size: 17px;
+  line-height: 1.35;
+}
+button { font: inherit; color: inherit; }
+button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+svg.px { shape-rendering: crispEdges; display: block; }
+
+/* Шапка — блок травы */
+.sky {
+  background: var(--grass);
+  border-bottom: 8px solid var(--grass-dark);
+  position: relative;
+}
+.sky::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -20px; height: 12px;
+  background:
+    linear-gradient(90deg, var(--grass-dark) 0 8px, transparent 8px 24px, var(--grass-dark) 24px 32px, transparent 32px 40px, var(--grass-dark) 40px 56px, transparent 56px 64px);
+  background-size: 64px 12px;
+}
+.sky-in {
+  max-width: 780px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+h1 {
+  font-family: var(--font-num); font-weight: 400; margin: 0; font-size: 1.35rem; line-height: 1.3;
+  color: #FFFFFF; text-shadow: 3px 3px 0 #2B4F12; letter-spacing: .02em;
+}
+.weeknav { display: flex; align-items: center; gap: 8px; }
+.weeknav .range {
+  font-weight: 700; color: #FFFFFF; text-shadow: 2px 2px 0 #2B4F12; min-width: 8.5em; text-align: center;
+}
+
+/* Кнопка-камень */
+.btn {
+  background: #7A7A7A; color: #FFFFFF; text-shadow: 2px 2px 0 #3F3F3F;
+  border: 3px solid; border-color: #ABABAB #3E3E3E #3E3E3E #ABABAB;
+  box-shadow: 0 0 0 2px #000; cursor: pointer; padding: 6px 12px; font-weight: 700;
+}
+.btn:hover { background: #8C93C2; border-color: #BDC4F0 #4A5080 #4A5080 #BDC4F0; }
+.btn:active { border-color: #3E3E3E #ABABAB #ABABAB #3E3E3E; }
+.btn:disabled { background: #2C2C2C; color: #A0A0A0; text-shadow: none; border-color: #444 #222 #222 #444; cursor: default; }
+.weeknav .btn { width: 42px; height: 42px; padding: 0; font-family: var(--font-num); font-size: .8rem; }
+
+.wrap {
+  max-width: 780px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 34px 40px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+
+/* Окно инвентаря */
+.panel {
+  background: var(--panel);
+  border: 4px solid; border-color: var(--panel-hi) var(--panel-lo) var(--panel-lo) var(--panel-hi);
+  box-shadow: 0 0 0 3px #000, 6px 6px 0 3px rgba(0,0,0,.35);
+  padding: 14px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.panel h2 { font-family: var(--font-px); font-weight: 700; font-size: 1.25rem; margin: 0; color: var(--ink); text-wrap: balance; }
+.slot {
+  background: var(--slot);
+  border: 3px solid; border-color: var(--slot-lo) var(--slot-hi) var(--slot-hi) var(--slot-lo);
+}
+
+/* Счёт */
+.score { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
+.bigstar { width: 96px; height: 96px; padding: 10px; position: relative; }
+.bigstar .num {
+  position: absolute; right: 4px; bottom: 4px; font-family: var(--font-num); font-size: 1.1rem;
+  color: #FFFFFF; text-shadow: 3px 3px 0 #3F3F3F;
+}
+.score-text { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.hint { font-weight: 600; color: var(--ink); }
+.hint b { color: #000; }
+
+/* Шкала опыта */
+.xp-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.xp-level { font-family: var(--font-num); font-size: .9rem; color: var(--xp); text-shadow: 2px 2px 0 #000, -2px 0 0 #000, 0 -2px 0 #000; }
+.xp {
+  width: 100%; height: 22px; background: #000; border: 3px solid #000; position: relative;
+  display: grid; grid-template-columns: repeat(30, 1fr); gap: 2px;
+}
+.xp i { display: block; background: #2A2A2A; }
+.xp i.on { background: linear-gradient(var(--xp) 0 50%, #5BCB12 50%); }
+.xp-goal { font-size: .95rem; font-weight: 600; color: var(--ink-soft); }
+
+/* Достижение */
+.toast {
+  background: var(--toast); color: #FFFFFF; border: 4px solid; border-color: #555 #000 #000 #555;
+  box-shadow: 0 0 0 3px #000; padding: 12px 14px;
+  display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center;
+}
+.toast .ico { width: 56px; height: 56px; padding: 6px; }
+.toast .t1 { color: var(--gold); font-weight: 700; font-size: 1.05rem; }
+.toast .t2 { font-size: 1.25rem; font-weight: 600; }
+.toast .t3 { color: #BBBBBB; font-size: .95rem; }
+.toast.miss .t1 { color: var(--red); }
+
+/* Хотбар дней */
+.hotbar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: #000; padding: 4px; border: 3px solid #000; }
+.day {
+  background: #8B8B8B; border: 3px solid; border-color: #373737 #FFFFFF #FFFFFF #373737;
+  cursor: pointer; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  color: #FFFFFF; text-shadow: 2px 2px 0 #3F3F3F;
+}
+.day .dn { font-family: var(--font-num); font-size: .78rem; }
+.day .ds { font-size: .9rem; font-weight: 600; }
+.day.sel { border-color: #FFFFFF; box-shadow: inset 0 0 0 3px #000; background: #A9A9A9; }
+.day.today .dn { color: var(--gold); }
+.day.full { background: #6E9E46; }
+
+.daybar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.cnt { font-weight: 700; color: var(--ink-soft); }
+
+/* Ячейки дел */
+.tasks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.task {
+  background: var(--slot); border: 4px solid; border-color: var(--slot-lo) var(--slot-hi) var(--slot-hi) var(--slot-lo);
+  cursor: pointer; padding: 14px 6px 10px; min-height: 140px; position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  transition: transform .1s;
+}
+.task:hover { background: #A0A0A0; }
+.task:active { transform: scale(.96); }
+.task .ico { width: 60px; height: 60px; }
+.task .lbl { font-weight: 700; font-size: 1.1rem; text-align: center; line-height: 1.1; color: #FFFFFF; text-shadow: 2px 2px 0 #3F3F3F; }
+.task .tick { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; opacity: 0; }
+.task.done { background: #6E9E46; border-color: #2F5A14 #B8E68F #B8E68F #2F5A14; }
+.task.done .tick { opacity: 1; }
+.task.pop .tick { animation: pop .45s steps(5); }
+@keyframes pop { 0% { transform: scale(.2); } 60% { transform: scale(1.5); } 100% { transform: scale(1); } }
+
+/* Сундук недели */
+.chest-scroll { overflow-x: auto; }
+table { border-collapse: separate; border-spacing: 3px; width: 100%; min-width: 330px; }
+th { font-family: var(--font-num); font-size: .62rem; color: var(--ink-soft); font-weight: 400; padding: 4px 0; }
+td.name { text-align: left; font-weight: 700; font-size: .95rem; white-space: nowrap; padding-right: 6px; }
+td { text-align: center; }
+.cell {
+  width: 100%; max-width: 44px; aspect-ratio: 1; padding: 4px; cursor: pointer;
+  background: var(--slot); border: 3px solid; border-color: var(--slot-lo) var(--slot-hi) var(--slot-hi) var(--slot-lo);
+  display: inline-grid; place-items: center;
+}
+.cell svg { width: 100%; height: 100%; visibility: hidden; }
+.cell.on svg { visibility: visible; }
+tfoot td { font-family: var(--font-num); font-size: .7rem; padding-top: 6px; }
+
+.footer { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.status { font-size: .95rem; color: #F0E0C8; text-shadow: 2px 2px 0 #000; text-align: center; min-height: 1.2em; }
+.confirm { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; font-weight: 700; color: #FFFFFF; text-shadow: 2px 2px 0 #000; }
+.btn.danger { background: #9A2E2E; }
+
+@media (max-width: 560px) {
+  h1 { font-size: 1rem; }
+  .score { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .score-text { width: 100%; }
+  .tasks { grid-template-columns: repeat(2, 1fr); }
+  .task:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .task { min-height: 124px; }
+  .task .ico { width: 52px; height: 52px; }
+  .day .dn { font-size: .62rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .task.pop .tick { animation: none; }
+  .task { transition: none; }
+}
+</style>
+
+<header class="sky">
+  <div class="sky-in">
+    <h1>ЗВЁЗДНАЯ НЕДЕЛЯ</h1>
+    <div class="weeknav">
+      <button class="btn" id="prev" aria-label="Прошлая неделя">&lt;</button>
+      <span class="range" id="range"></span>
+      <button class="btn" id="next" aria-label="Следующая неделя">&gt;</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="panel" aria-live="polite">
+    <div class="score">
+      <div class="slot bigstar"><span id="bigStarIco"></span><span class="num" id="total">0</span></div>
+      <div class="score-text">
+        <div class="hint" id="hint"></div>
+        <div class="xp-wrap">
+          <div class="xp-level" id="xpLevel">0</div>
+          <div class="xp" id="xp" role="progressbar" aria-valuemin="0" aria-valuemax="30"></div>
+          <div class="xp-goal">30 звёзд — в субботу мультики</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="toast" id="saturday" hidden>
+    <div class="slot ico" id="satIco"></div>
+    <div>
+      <div class="t1" id="satTitle"></div>
+      <div class="t2" id="satPrize"></div>
+      <div class="t3" id="satNote"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="hotbar" id="days" role="tablist" aria-label="Дни недели"></div>
+    <div class="daybar"><h2 id="dayTitle"></h2><span class="cnt" id="dayCnt"></span></div>
+    <div class="tasks" id="tasks"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Сундук недели</h2>
+    <div class="chest-scroll">
+      <table>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+        <tfoot><tr id="tfoot"></tr></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <div class="footer">
+    <div class="status" id="status"></div>
+    <button class="btn" id="reset">Очистить эту неделю</button>
+    <div class="confirm" id="confirm" hidden>Стереть все звёзды за неделю? <button class="btn danger" id="yes">Стереть</button><button class="btn" id="no">Отмена</button></div>
+  </div>
+</div>
+
+<script>
+// ---------- Пиксельная графика (рисуем сами, 12×12) ----------
+const PAL = {
+  K: "#1B1B1B", W: "#FFFFFF", L: "#C9C9C9", G: "#7A7A7A", D: "#3A3A3A",
+  B: "#3C6FD8", N: "#22408A", Y: "#FCDB05", O: "#E08A00", R: "#9C3D22", P: "#F3EBD3",
+  C: "#5BE0E6", T: "#C8A06A", V: "#2BA84A", U: "#4AA3F0", E: "#E8662A", S: "#F28CB0",
+};
+const ART = {
+  teeth: [
+    "............",
+    "..KKK..KKK..",
+    ".KWWWKKWWWK.",
+    ".KWWWWWWWWK.",
+    ".KWWWWWWWWK.",
+    ".KWWWWWWWLK.",
+    "..KWWWWWLK..",
+    "..KWWKKWLK..",
+    "..KWK..KLK..",
+    "..KWK..KLK..",
+    "...K....K...",
+    "............"],
+  letters: [
+    "KKKKKKKKKKKK",
+    "KBBBBBBBBBBK",
+    "KBBBYYYYBBBK",
+    "KBBYYBBYYBBK",
+    "KBBYYBBYYBBK",
+    "KBBYYYYYYBBK",
+    "KBBYYBBYYBBK",
+    "KBBYYBBYYBBK",
+    "KBBBBBBBBBBK",
+    "KNNNNNNNNNNK",
+    "KKKKKKKKKKKK",
+    "............"],
+  tale: [
+    "............",
+    ".KKKKKKKKKK.",
+    ".KRRRRRRRPK.",
+    ".KRYYYYRRPK.",
+    ".KRRRRRRRPK.",
+    ".KRRYYRRRPK.",
+    ".KRRYYRRRPK.",
+    ".KRRRRRRRPK.",
+    ".KRRRRRRRPK.",
+    ".KRRRRRRRPK.",
+    ".KKKKKKKKKK.",
+    "............"],
+  speech: [
+    "............",
+    ".KKKKKKKKKK.",
+    "KWWWWWWWWWWK",
+    "KWWWWWWWWWWK",
+    "KWWDWWDWWDWK",
+    "KWWWWWWWWWWK",
+    "KLLLLLLLLLLK",
+    ".KKKKLLKKKK.",
+    "....KLK.....",
+    "....KK......",
+    "............",
+    "............"],
+  app: [
+    "..KKKKKKKK..",
+    "..KDDDDDDK..",
+    "..KCCCCCCK..",
+    "..KCVCCECK..",
+    "..KCCCCCCK..",
+    "..KCYCCVCK..",
+    "..KCCCCCCK..",
+    "..KCCCCCCK..",
+    "..KDDDDDDK..",
+    "..KDDWWDDK..",
+    "..KKKKKKKK..",
+    "............"],
+  sport: [
+    "....KKKK....",
+    "..KKOOOOKK..",
+    ".KOOOKOOOOK.",
+    ".KOOOKOOOOK.",
+    "KOOOKKOOOOOK",
+    "KKKKKKKKKKKK",
+    "KOOOOOKKOOOK",
+    ".KOOOOOKOOK.",
+    ".KOOOOOKOOK.",
+    "..KKOOOOKK..",
+    "....KKKK....",
+    "............"],
+  water: [
+    "....KKKK....",
+    "....KTTK....",
+    ".....KK.....",
+    "....KWWK....",
+    "...KWUUWK...",
+    "..KUUUUUUK..",
+    "..KUWUUUUK..",
+    "..KUWUUUUK..",
+    "..KUUUUUNK..",
+    "..KUUUUNNK..",
+    "...KKKKKK...",
+    "............"],
+  cat: [
+    ".K........K.",
+    "KOK......KOK",
+    "KOOK....KOOK",
+    "KOOOKKKKOOOK",
+    "KOOOOOOOOOOK",
+    "KOWKOOOOWKOK",
+    "KOKKOOOOKKOK",
+    "KOOOOSSOOOOK",
+    "KOOOKOOKOOOK",
+    ".KOOOKKOOOK.",
+    "..KKOOOOKK..",
+    "....KKKK...."],
+  star: [
+    ".....KK.....",
+    "....KYYK....",
+    "....KYYK....",
+    "KKKKYWYYKKKK",
+    "KYYYYWYYYYOK",
+    ".KYYYYYYYOK.",
+    "..KYYYYYOK..",
+    "..KYYYYYYK..",
+    ".KYYOKKYYOK.",
+    ".KYOK..KYOK.",
+    "KYOK....KOOK",
+    "KKK......KKK"],
+  check: [
+    "............",
+    "..........KK",
+    ".........KVK",
+    "........KVK.",
+    ".KK....KVK..",
+    "KVVK..KVK...",
+    ".KVVKKVK....",
+    "..KVVVK.....",
+    "...KVK......",
+    "....K.......",
+    "............",
+    "............"],
+  nope: [
+    "............",
+    ".KK......KK.",
+    "KEEK....KEEK",
+    ".KEEK..KEEK.",
+    "..KEEKKEEK..",
+    "...KEEEEK...",
+    "...KEEEEK...",
+    "..KEEKKEEK..",
+    ".KEEK..KEEK.",
+    "KEEK....KEEK",
+    ".KK......KK.",
+    "............"],
+};
+function px(name, cls) {
+  const rows = ART[name];
+  let r = "";
+  rows.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (ch !== ".") r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${PAL[ch]}"/>`;
+  }));
+  return `<svg class="px ${cls || ""}" viewBox="0 0 12 12" aria-hidden="true">${r}</svg>`;
+}
+// Текстура земли для фона
+(function dirt() {
+  try {
+    const c = document.createElement("canvas"); c.width = c.height = 16;
+    const g = c.getContext("2d");
+    const cols = ["#6B4A2F", "#7A5636", "#5C3F27", "#86603D", "#4F3622"];
+    let s = 7;
+    const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+      const r = rnd();
+      g.fillStyle = cols[r < .45 ? 0 : r < .7 ? 1 : r < .85 ? 2 : r < .95 ? 3 : 4];
+      g.fillRect(x, y, 1, 1);
+    }
+    document.body.style.backgroundImage = `url(${c.toDataURL()})`;
+  } catch (e) {}
+})();
+
+// ---------- Данные ----------
+const TASKS = [
+  { id: "teeth",   name: "Чистка зубов", short: "Зубки" },
+  { id: "letters", name: "Буквы",        short: "Буквы" },
+  { id: "tale",    name: "Сказка",       short: "Сказка" },
+  { id: "speech",  name: "Логопед",      short: "Логопед" },
+  { id: "app",     name: "Приложение",   short: "Прилож." },
+  { id: "sport",   name: "Спорт",        short: "Спорт" },
+  { id: "water",   name: "Вода",         short: "Вода" },
+  { id: "cat",     name: "Покормить кота", short: "Кот" },
+];
+const DAYS = [
+  { id: "mon", name: "Понедельник", short: "ПН" },
+  { id: "tue", name: "Вторник",     short: "ВТ" },
+  { id: "wed", name: "Среда",       short: "СР" },
+  { id: "thu", name: "Четверг",     short: "ЧТ" },
+  { id: "fri", name: "Пятница",     short: "ПТ" },
+];
+const MAX = TASKS.length * DAYS.length; // 40
+const GOAL = 30; // от стольких звёзд в субботу мультики, меньше — без мультиков
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+const MONTHS = ["янв","фев","мар","апр","мая","июн","июл","авг","сен","окт","ноя","дек"];
+
+function mondayOf(d) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - (x.getDay() + 6) % 7);
+  return x;
+}
+function weekKey(mon) { return `${mon.getFullYear()}-${pad(mon.getMonth() + 1)}-${pad(mon.getDate())}`; }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function plural(n, a, b, c) { const m10 = n % 10, m100 = n % 100; if (m10 === 1 && m100 !== 11) return a; if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return b; return c; }
+const stars = n => `${n} ${plural(n, "звезда", "звезды", "звёзд")}`;
+
+const now = new Date();
+const thisMonday = mondayOf(now);
+const todayIdx = (now.getDay() + 6) % 7;
+let monday = thisMonday;
+let selDay = Math.min(todayIdx, 4);
+let done = {};
+let dirty = false, saveTimer = null, chain = Promise.resolve();
+let db = null, unsub = null, readOnly = false;
+
+// ---------- Хранилище: db артефакта, иначе память браузера ----------
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function loadWeek() {
+  if (unsub) { unsub(); unsub = null; }
+  clearTimeout(saveTimer); dirty = false;
+  const key = weekKey(monday);
+  done = lsGet("week:" + key) || {};
+  render();
+  if (!db) return;
+  unsub = db.doc("weeks/" + key).onSnapshot(snap => {
+    if (dirty || weekKey(monday) !== key) return;
+    const body = snap.exists ? snap.data() : null;
+    done = body && body.done ? JSON.parse(JSON.stringify(body.done)) : {};
+    lsSet("week:" + key, done);
+    render();
+  }, () => setStatus("Не получилось загрузить отметки. Обновите страницу."));
+}
+
+function scheduleSave() {
+  const key = weekKey(monday);
+  lsSet("week:" + key, done);
+  if (!db || readOnly) return;
+  dirty = true;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    const body = { done: JSON.parse(JSON.stringify(done)), updated: new Date().toISOString() };
+    chain = chain.then(() => db.doc("weeks/" + key).set(body))
+      .then(() => { dirty = false; setStatus("Сохранено"); })
+      .catch(e => {
+        dirty = false;
+        if (e && e.code === "invalid_argument") { readOnly = true; setStatus("Здесь можно только смотреть: отметки сохраняются лишь на этом устройстве."); }
+        else setStatus("Не удалось сохранить. Проверьте интернет и отметьте ещё раз.");
+      });
+  }, 500);
+}
+function setStatus(t) { $("status").textContent = t; }
+
+const isOn = (d, t) => !!(done[d] && done[d][t]);
+const dayCount = d => TASKS.filter(t => isOn(d, t.id)).length;
+const total = () => DAYS.reduce((s, d) => s + dayCount(d.id), 0);
+
+function toggle(dayId, taskId) {
+  done[dayId] = Object.assign({}, done[dayId]);
+  if (done[dayId][taskId]) delete done[dayId][taskId]; else done[dayId][taskId] = true;
+  const on = !!done[dayId][taskId];
+  render();
+  if (on && dayId === DAYS[selDay].id) {
+    const el = document.querySelector(`.task[data-t="${taskId}"]`);
+    if (el) { el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
+  }
+  scheduleSave();
+}
+
+// ---------- Отрисовка ----------
+const STAR = px("star"), CHECK = px("check", "tick");
+$("bigStarIco").innerHTML = STAR;
+
+function render() {
+  const n = total();
+  const got = n >= GOAL;
+  const isThisWeek = weekKey(monday) === weekKey(thisMonday);
+  const fri = addDays(monday, 4);
+  $("range").textContent = `${monday.getDate()} ${MONTHS[monday.getMonth()]} – ${fri.getDate()} ${MONTHS[fri.getMonth()]}`;
+  $("next").disabled = isThisWeek;
+  $("total").textContent = n;
+
+  const left = GOAL - n;
+  $("hint").innerHTML = got
+    ? `<b>${stars(n)}!</b> В субботу будут мультики!`
+    : `<b>${stars(n)}</b> из ${GOAL}. Ещё ${stars(left)} — и в субботу будут мультики.`;
+  $("xpLevel").textContent = `${Math.min(n, GOAL)}/${GOAL}`;
+  $("xp").setAttribute("aria-valuenow", Math.min(n, GOAL));
+  $("xp").innerHTML = Array.from({ length: GOAL }, (_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("");
+
+  const showSat = !isThisWeek || todayIdx >= 5;
+  const sat = $("saturday");
+  sat.hidden = !showSat;
+  if (showSat) {
+    sat.classList.toggle("miss", !got);
+    $("satIco").innerHTML = got ? STAR : px("nope");
+    $("satTitle").textContent = got ? "Достижение получено!" : "Не хватило звёзд";
+    $("satPrize").textContent = got ? "Суббота — день мультиков!" : "В эту субботу без мультиков";
+    $("satNote").textContent = isThisWeek
+      ? `Собрано ${stars(n)} из ${GOAL}.` + (got ? "" : " На следующей неделе получится!")
+      : `Итог недели: ${stars(n)}.`;
+  }
+
+  $("days").innerHTML = DAYS.map((d, i) => {
+    const cls = ["day", i === selDay ? "sel" : "", isThisWeek && i === todayIdx ? "today" : "", dayCount(d.id) === TASKS.length ? "full" : ""].join(" ");
+    return `<button class="${cls}" role="tab" aria-selected="${i === selDay}" data-i="${i}"><span class="dn">${d.short}</span><span class="ds">${dayCount(d.id)}/${TASKS.length}</span></button>`;
+  }).join("");
+
+  const d = DAYS[selDay];
+  const date = addDays(monday, selDay);
+  $("dayTitle").textContent = `${d.name}, ${date.getDate()} ${MONTHS[date.getMonth()]}`;
+  const c = dayCount(d.id);
+  $("dayCnt").textContent = c === TASKS.length ? "Все звёзды за день!" : `${c} из ${TASKS.length}`;
+  $("tasks").innerHTML = TASKS.map(t => {
+    const on = isOn(d.id, t.id);
+    return `<button class="task ${on ? "done" : ""}" data-t="${t.id}" aria-pressed="${on}">${CHECK}${px(t.id, "ico")}<span class="lbl">${t.name}</span></button>`;
+  }).join("");
+
+  $("thead").innerHTML = `<th></th>` + DAYS.map(d => `<th>${d.short}</th>`).join("");
+  $("tbody").innerHTML = TASKS.map(t => `<tr><td class="name">${t.short}</td>` +
+    DAYS.map(d => `<td><button class="cell ${isOn(d.id, t.id) ? "on" : ""}" data-d="${d.id}" data-t="${t.id}" aria-label="${t.name}, ${d.name}" aria-pressed="${isOn(d.id, t.id)}">${STAR}</button></td>`).join("") + `</tr>`).join("");
+  $("tfoot").innerHTML = `<td class="name">Звёзды</td>` + DAYS.map(d => `<td>${dayCount(d.id)}</td>`).join("");
+}
+
+$("days").addEventListener("click", e => { const b = e.target.closest(".day"); if (!b) return; selDay = +b.dataset.i; render(); });
+$("tasks").addEventListener("click", e => { const b = e.target.closest(".task"); if (b) toggle(DAYS[selDay].id, b.dataset.t); });
+$("tbody").addEventListener("click", e => { const b = e.target.closest(".cell"); if (b) toggle(b.dataset.d, b.dataset.t); });
+$("prev").addEventListener("click", () => { monday = addDays(monday, -7); selDay = 0; loadWeek(); });
+$("next").addEventListener("click", () => {
+  if (weekKey(monday) === weekKey(thisMonday)) return;
+  monday = addDays(monday, 7);
+  selDay = weekKey(monday) === weekKey(thisMonday) ? Math.min(todayIdx, 4) : 0;
+  loadWeek();
+});
+$("reset").addEventListener("click", () => { $("confirm").hidden = false; $("reset").hidden = true; });
+$("no").addEventListener("click", () => { $("confirm").hidden = true; $("reset").hidden = false; });
+$("yes").addEventListener("click", () => {
+  done = {}; render(); scheduleSave();
+  $("confirm").hidden = true; $("reset").hidden = false;
+});
+
+loadWeek();
+(async () => {
+  try { db = window.claude ? await window.claude.use("db") : null; } catch (e) { db = null; }
+  if (db) loadWeek();
+  else setStatus("Отметки сохраняются на этом устройстве.");
+})();
+</script>
+
+</body>
+</html>
