@@ -131,7 +131,7 @@ h1 {
 .xp-level { font-family: var(--font-num); font-size: .9rem; color: var(--xp); text-shadow: 2px 2px 0 #000, -2px 0 0 #000, 0 -2px 0 #000; }
 .xp {
   width: 100%; height: 22px; background: #000; border: 3px solid #000; position: relative;
-  display: grid; grid-template-columns: repeat(50, 1fr); gap: 1px;
+  display: grid; grid-template-columns: repeat(60, 1fr); gap: 1px;
 }
 .xp i { display: block; background: #2A2A2A; }
 .xp i.on { background: linear-gradient(var(--xp) 0 50%, #5BCB12 50%); }
@@ -256,8 +256,8 @@ tfoot td { font-family: var(--font-num); font-size: .7rem; padding-top: 6px; }
         <div class="bonus" id="bonus"></div>
         <div class="xp-wrap">
           <div class="xp-level" id="xpLevel">0</div>
-          <div class="xp" id="xp" role="progressbar" aria-valuemin="0" aria-valuemax="50"></div>
-          <div class="xp-goal">50 звёзд — в субботу мультики</div>
+          <div class="xp" id="xp" role="progressbar" aria-valuemin="0" aria-valuemax="60"></div>
+          <div class="xp-goal">60 звёзд — в субботу мультики</div>
         </div>
       </div>
     </div>
@@ -494,7 +494,7 @@ const DAYS = [
   { id: "sun", name: "Воскресенье", short: "ВС", weekend: true },
 ];
 const WORK = DAYS.filter(d => !d.weekend), WEEKEND = DAYS.filter(d => d.weekend);
-const GOAL = 50; // от стольких звёзд в субботу мультики, меньше — без мультиков
+const GOAL = 60; // от стольких звёзд в субботу мультики, меньше — без мультиков
 // К субботе считаются: звёзды пн–пт этой недели + бонус за сб и вс прошлой недели.
 
 const $ = id => document.getElementById(id);
